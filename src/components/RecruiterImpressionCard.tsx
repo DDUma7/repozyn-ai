@@ -26,7 +26,7 @@ export const RecruiterImpressionCard: React.FC<RecruiterImpressionCardProps> = (
             HEURISTIC RECRUITER ASSESSMENT
           </span>
           <span className="text-xs text-slate-500 hidden sm:inline">
-            The 10-Second Scan Simulation
+            Quick-Scan Simulation
           </span>
         </div>
 
@@ -56,7 +56,7 @@ export const RecruiterImpressionCard: React.FC<RecruiterImpressionCardProps> = (
 
           <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 text-sm text-slate-300">
             <span className="font-semibold text-white block mb-1">
-              ⚡ 10-Second Scan Verdict:
+              ⚡ Quick-Scan Verdict:
             </span>
             <p className="text-slate-400 text-xs sm:text-sm">{recruiter.tenSecondVerdict}</p>
           </div>

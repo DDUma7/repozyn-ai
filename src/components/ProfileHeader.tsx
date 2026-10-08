@@ -17,16 +17,26 @@ import type { PortfolioReport } from '../types/analysis';
 interface ProfileHeaderProps {
   report: PortfolioReport;
   onOpenReportModal: () => void;
+  onOpenMakeoverModal: () => void;
 }
 
-export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ report, onOpenReportModal }) => {
+export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
+  report,
+  onOpenReportModal,
+  onOpenMakeoverModal,
+}) => {
   const { facts, scoring, isMockData } = report;
   const [copiedLink, setCopiedLink] = useState(false);
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
+  // The URL carries ?user= / ?demo= for the audit on screen, so the copied link reopens it
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      // Clipboard unavailable: leave the label unchanged rather than claim success
+    }
   };
 
   return (
@@ -37,19 +47,28 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ report, onOpenRepo
       {/* Verified Data Banner */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-6 mb-6 border-b border-slate-800/80">
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-950/40 border border-emerald-700/50 text-emerald-300">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            VERIFIED GITHUB FACTS
-          </span>
-          {isMockData && (
+          {isMockData ? (
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-950/40 border border-amber-700/50 text-amber-300">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              DEMO PERSONA
+              DEMO PERSONA • SAMPLE DATA, NOT A REAL GITHUB PROFILE
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-950/40 border border-emerald-700/50 text-emerald-300">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              VERIFIED GITHUB FACTS
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={onOpenMakeoverModal}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition hover:scale-[1.02] active:scale-[0.98]"
+            title="Generate a personalized, copy-ready GitHub profile README"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>Profile Makeover</span>
+          </button>
           <button
             onClick={handleShare}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition"
@@ -59,10 +78,10 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ report, onOpenRepo
           </button>
           <button
             onClick={onOpenReportModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition"
           >
             <Copy className="w-3.5 h-3.5" />
-            <span>Export Markdown</span>
+            <span>Export Report</span>
           </button>
         </div>
       </div>

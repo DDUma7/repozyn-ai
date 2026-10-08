@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type React from 'react';
 import { X, Copy, Check, FileDown } from 'lucide-react';
 import type { PortfolioReport } from '../types/analysis';
+import { formatReportToMarkdown } from '../utils/markdownReport';
+import { useDialogAccessibility } from '../hooks/useDialogAccessibility';
 
 interface MarkdownReportModalProps {
   isOpen: boolean;
@@ -9,40 +11,60 @@ interface MarkdownReportModalProps {
   report: PortfolioReport;
 }
 
-import { formatReportToMarkdown } from '../utils/markdownReport';
-
 export const MarkdownReportModal: React.FC<MarkdownReportModalProps> = ({
   isOpen,
   onClose,
   report,
 }) => {
   const [copied, setCopied] = useState(false);
+  const { containerRef } = useDialogAccessibility({ isOpen, onClose });
 
   if (!isOpen) return null;
 
   const markdownContent = formatReportToMarkdown(report);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(markdownContent);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(markdownContent);
+      } else {
+        const temp = document.createElement('textarea');
+        temp.value = markdownContent;
+        temp.style.position = 'fixed';
+        temp.style.opacity = '0';
+        document.body.appendChild(temp);
+        temp.focus();
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Ignore clipboard write errors
+    }
   };
 
   const handleDownload = () => {
-    const blob = new Blob([markdownContent], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `repozyn-audit-${report.facts.username}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `repozyn-audit-${report.facts.username}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      // Ignore download errors
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" role="presentation">
       <div
+        ref={containerRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-modal-title"

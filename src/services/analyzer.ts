@@ -397,7 +397,7 @@ export function determineRecruiterImpression(facts: PortfolioFacts): RecruiterIm
     archetype = 'The Product Crafter';
     archetypeBadge = 'Product Focused';
     archetypeDescription = 'Focuses on building clickable, usable applications with visible live previews.';
-    firstImpressionQuote = 'Terrific signal! I can click and test what they built in 5 seconds without cloning anything.';
+    firstImpressionQuote = 'Terrific signal! I can click and test what they built right away without cloning anything.';
   }
 
   // Recruiter signals
@@ -508,7 +508,7 @@ export function determineRecruiterImpression(facts: PortfolioFacts): RecruiterIm
       ? 'A recruiter reviewing this profile will immediately see production credibility, clean code habits, and verifiable results.'
       : hireabilitySignal === 'Promising'
       ? 'A recruiter will see genuine engineering capability, but might hesitate to click deeper without live demos and concise descriptions.'
-      : 'A recruiter will likely move to the next candidate within 10 seconds because the portfolio requires too much detective work to evaluate.';
+      : 'A recruiter is likely to move on to the next candidate because the portfolio requires too much detective work to evaluate.';
 
   return {
     archetype,
@@ -545,7 +545,7 @@ export function generateEvidenceBasedRoasts(facts: PortfolioFacts): RoastItem[] 
       category: 'repo-hygiene',
       severity: 'mild',
       evidence: `${facts.reposWithDescriptionPercentage}% description coverage across ${facts.analyzedReposCount} repos`,
-      roast: `You actually write descriptions, which puts you ahead of 70% of developers. Now if only the descriptions didn't all sound like they were written at 3:45 AM during finals week.`,
+      roast: `You actually write descriptions, which is more than a lot of profiles manage. Now if only the descriptions didn't all sound like they were written at 3:45 AM during finals week.`,
     });
   }
 
@@ -608,7 +608,7 @@ export function generateEvidenceBasedRoasts(facts: PortfolioFacts): RoastItem[] 
       category: 'repo-hygiene',
       severity: 'spicy',
       evidence: `0 live demo URLs across all ${facts.originalReposCount} original repositories`,
-      roast: `Expecting a tech recruiter to clone your repository, install node modules, configure local environment variables, and debug your node version just to see a button is peak optimism. Deploy to Vercel or Netlify—it takes 90 seconds!`,
+      roast: `Expecting a tech recruiter to clone your repository, install node modules, configure local environment variables, and debug your node version just to see a button is peak optimism. Deploy to Vercel or Netlify—it only takes a few minutes!`,
     });
   }
 
@@ -689,7 +689,7 @@ export function generatePersonalizedRoadmap(facts: PortfolioFacts): RoadmapActio
     items.push({
       id: 'action-deploy-demo',
       title: 'Deploy Free Live Previews on Vercel or GitHub Pages',
-      description: 'Recruiters spend an average of 15-30 seconds scanning your profile. Give them a clickable live product immediately.',
+      description: 'Reviewers skim profiles quickly. Give them a clickable live product immediately.',
       priority: 'critical',
       effort: '1-2 hours',
       impactScore: 10,

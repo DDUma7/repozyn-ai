@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import type React from 'react';
 import { Flame, Key, RefreshCw, ExternalLink, Sparkles } from 'lucide-react';
 import type { RateLimitInfo } from '../types/github';
@@ -19,6 +20,35 @@ export const Navbar: React.FC<NavbarProps> = ({
   onReset,
 }) => {
   const resetMinutes = rateLimit?.resetMinutes ?? 60;
+  const [isPersonaMenuOpen, setIsPersonaMenuOpen] = useState(false);
+  const personaMenuRef = useRef<HTMLDivElement>(null);
+  const personaToggleRef = useRef<HTMLButtonElement>(null);
+
+  // Close the persona menu on Escape or when interacting anywhere outside it
+  useEffect(() => {
+    if (!isPersonaMenuOpen) return;
+
+    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+      if (personaMenuRef.current && !personaMenuRef.current.contains(e.target as Node)) {
+        setIsPersonaMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsPersonaMenuOpen(false);
+        personaToggleRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isPersonaMenuOpen]);
   return (
     <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -35,22 +65,27 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+              <span className="font-bold text-base sm:text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent whitespace-nowrap">
                 Repozyn AI
               </span>
-              <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30">
+              <span className="hidden sm:inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 whitespace-nowrap">
                 Roast & Rescue
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-medium">GitHub Portfolio Intelligence</p>
+            <p className="hidden sm:block text-xs text-slate-400 font-medium truncate">GitHub Portfolio Intelligence</p>
           </div>
         </button>
 
         {/* Right Actions */}
         <nav aria-label="Quick actions" className="flex items-center gap-2 sm:gap-4">
           {/* Mock Personas Dropdown */}
-          <div className="relative group">
+          <div className="relative" ref={personaMenuRef}>
             <button
+              ref={personaToggleRef}
+              type="button"
+              onClick={() => setIsPersonaMenuOpen((open) => !open)}
+              aria-expanded={isPersonaMenuOpen}
+              aria-controls="demo-persona-menu"
               aria-label="Select demo persona"
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
@@ -58,21 +93,30 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="hidden sm:inline">Demo Personas</span>
               <span className="sm:hidden">Demos</span>
             </button>
-            <div className="absolute right-0 mt-2 w-64 rounded-xl bg-slate-900 border border-slate-800 shadow-2xl p-2 hidden group-hover:block hover:block z-50">
+            {isPersonaMenuOpen && (
+            <div
+              id="demo-persona-menu"
+              className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-xl bg-slate-900 border border-slate-800 shadow-2xl p-2 z-50"
+            >
               <div className="px-2 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Instant Mock Profiles
+                Sample Demo Profiles
               </div>
               {MOCK_PROFILES.map((profile) => (
                 <button
                   key={profile.id}
-                  onClick={() => onSelectMock(profile)}
-                  className="w-full text-left p-2 rounded-lg hover:bg-slate-800/80 transition flex flex-col gap-0.5"
+                  type="button"
+                  onClick={() => {
+                    setIsPersonaMenuOpen(false);
+                    onSelectMock(profile);
+                  }}
+                  className="w-full text-left p-2 rounded-lg hover:bg-slate-800/80 transition flex flex-col gap-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 >
                   <span className="text-xs font-semibold text-slate-200">{profile.name}</span>
                   <span className="text-[11px] text-slate-400 line-clamp-1">{profile.tagline}</span>
                 </button>
               ))}
             </div>
+            )}
           </div>
 
           {/* Rate Limit Badge */}

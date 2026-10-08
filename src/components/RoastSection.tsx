@@ -5,9 +5,10 @@ import type { RoastItem, RoastTone } from '../types/analysis';
 
 interface RoastSectionProps {
   roasts: RoastItem[];
+  isMockData?: boolean;
 }
 
-export const RoastSection: React.FC<RoastSectionProps> = ({ roasts }) => {
+export const RoastSection: React.FC<RoastSectionProps> = ({ roasts, isMockData = false }) => {
   const [tone, setTone] = useState<RoastTone>('medium');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -17,11 +18,27 @@ export const RoastSection: React.FC<RoastSectionProps> = ({ roasts }) => {
     return true; // spicy: show all
   });
 
-  const handleCopyRoast = (roast: RoastItem) => {
+  const handleCopyRoast = async (roast: RoastItem) => {
     const text = `🔥 Repozyn AI Roast: "${roast.title}"\n${roast.roast}\n\nEvidence: ${roast.evidence}`;
-    navigator.clipboard.writeText(text);
-    setCopiedId(roast.id);
-    setTimeout(() => setCopiedId(null), 2000);
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const temp = document.createElement('textarea');
+        temp.value = text;
+        temp.style.position = 'fixed';
+        temp.style.opacity = '0';
+        document.body.appendChild(temp);
+        temp.focus();
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+      }
+      setCopiedId(roast.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      // Ignore clipboard write error
+    }
   };
 
   return (
@@ -37,13 +54,21 @@ export const RoastSection: React.FC<RoastSectionProps> = ({ roasts }) => {
             <h3 className="text-xl sm:text-2xl font-extrabold text-white">The Honest Roast</h3>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Humorous, data-backed observations grounded in verified repository facts.
+            {isMockData
+              ? 'Humorous observations grounded in this demo persona\u2019s sample data.'
+              : 'Humorous, data-backed observations grounded in verified repository facts.'}
           </p>
         </div>
 
         {/* Tone Slider / Tabs */}
-        <div className="flex items-center p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs font-semibold">
+        <div
+          role="group"
+          aria-label="Roast intensity level"
+          className="flex items-center p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs font-semibold"
+        >
           <button
+            type="button"
+            aria-pressed={tone === 'mild'}
             onClick={() => setTone('mild')}
             className={`px-3 py-1.5 rounded-lg transition ${
               tone === 'mild'
@@ -54,6 +79,8 @@ export const RoastSection: React.FC<RoastSectionProps> = ({ roasts }) => {
             🌱 Mild
           </button>
           <button
+            type="button"
+            aria-pressed={tone === 'medium'}
             onClick={() => setTone('medium')}
             className={`px-3 py-1.5 rounded-lg transition ${
               tone === 'medium'
@@ -64,6 +91,8 @@ export const RoastSection: React.FC<RoastSectionProps> = ({ roasts }) => {
             🔥 Medium
           </button>
           <button
+            type="button"
+            aria-pressed={tone === 'spicy'}
             onClick={() => setTone('spicy')}
             className={`px-3 py-1.5 rounded-lg transition ${
               tone === 'spicy'
@@ -129,7 +158,7 @@ export const RoastSection: React.FC<RoastSectionProps> = ({ roasts }) => {
                   <div className="flex items-start gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 text-[11px] text-slate-400">
                     <Tag className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-semibold text-slate-300">Verified Evidence: </span>
+                      <span className="font-semibold text-slate-300">{isMockData ? 'Sample Evidence: ' : 'Verified Evidence: '}</span>
                       <span>{roast.evidence}</span>
                     </div>
                   </div>

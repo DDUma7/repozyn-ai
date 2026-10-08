@@ -22,6 +22,15 @@ export const RescueRoadmapSection: React.FC<RescueRoadmapSectionProps> = ({ road
   const [expandedSnippetId, setExpandedSnippetId] = useState<string | null>(null);
   const [copiedSnippetId, setCopiedSnippetId] = useState<string | null>(null);
 
+  // Progress belongs to one profile: start clean whenever a different roadmap is shown
+  const [roadmapForProgress, setRoadmapForProgress] = useState(roadmap);
+  if (roadmapForProgress !== roadmap) {
+    setRoadmapForProgress(roadmap);
+    setCompletedIds(new Set());
+    setExpandedSnippetId(null);
+    setCopiedSnippetId(null);
+  }
+
   const toggleComplete = (id: string) => {
     setCompletedIds((prev) => {
       const next = new Set(prev);

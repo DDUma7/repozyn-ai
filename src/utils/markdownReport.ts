@@ -2,17 +2,22 @@ import type { PortfolioReport } from '../types/analysis';
 
 export function formatReportToMarkdown(report: PortfolioReport): string {
   const { facts, scoring, recruiter, roasts, roadmap } = report;
+  const isMockData = Boolean(report.isMockData);
 
   return `# 🚀 Repozyn AI: GitHub Portfolio Audit & Roast
 **Target User:** [@${facts.username}](${facts.profileUrl}) (${facts.name || 'Anonymous'})  
 **Portfolio Health Grade:** **${scoring.grade}** (${scoring.totalScore}/100)  
 **Recruiter Archetype:** *${recruiter.archetype}*  
 **Hireability Signal:** **${recruiter.hireabilitySignal}**  
-**Audit Timestamp:** ${new Date(report.analyzedAt).toLocaleDateString()}
+**Audit Timestamp:** ${new Date(report.analyzedAt).toLocaleDateString()}${
+    isMockData
+      ? '\n\n> ⚠️ **Demo persona:** this report was generated from synthetic sample data, not a real GitHub profile.'
+      : ''
+  }
 
 ---
 
-## 🟢 Verified GitHub Facts (Real REST API Data)
+## ${isMockData ? '🟡 Sample Persona Data (Synthetic Demo, Not Real GitHub Data)' : '🟢 Verified GitHub Facts (Real REST API Data)'}
 | Metric | Value |
 | :--- | :--- |
 | Public Repositories | ${facts.totalPublicRepos} (${facts.originalReposCount} original, ${facts.forkedReposCount} forks) |
@@ -26,7 +31,7 @@ export function formatReportToMarkdown(report: PortfolioReport): string {
 
 ---
 
-## 🟣 Recruiter First Impression (The 10-Second Scan)
+## 🟣 Recruiter First Impression (Quick Scan)
 > "${recruiter.firstImpressionQuote}"
 > — *Engineering Lead / Hiring Manager*
 

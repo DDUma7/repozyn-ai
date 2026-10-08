@@ -265,7 +265,7 @@ export const SearchHero: React.FC<SearchHeroProps> = ({
         <span>•</span>
         <span>Zero Fabricated AI Claims</span>
         <span>•</span>
-        <span>100% Client-Side Private</span>
+        <span>No Sign-Up • No Database</span>
       </div>
     </div>
   );

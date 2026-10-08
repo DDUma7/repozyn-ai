@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type React from 'react';
 import { X, Key, ShieldCheck, Check, AlertCircle, Trash2, ExternalLink } from 'lucide-react';
 import { checkRateLimit } from '../services/github';
 import type { RateLimitInfo } from '../types/github';
+import { useDialogAccessibility } from '../hooks/useDialogAccessibility';
 
 interface TokenModalProps {
   isOpen: boolean;
@@ -24,6 +25,13 @@ export const TokenModal: React.FC<TokenModalProps> = ({
   const [tokenInput, setTokenInput] = useState(savedToken);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const { containerRef } = useDialogAccessibility({
+    isOpen,
+    onClose,
+    initialFocusRef: inputRef,
+  });
 
   if (!isOpen) return null;
 
@@ -68,6 +76,7 @@ export const TokenModal: React.FC<TokenModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" role="presentation">
       <div
+        ref={containerRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="token-modal-title"
@@ -96,17 +105,21 @@ export const TokenModal: React.FC<TokenModalProps> = ({
         <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-start gap-3 mb-5 text-xs text-slate-300">
           <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
           <p>
-            <strong>Privacy Guarantee:</strong> Your token is stored purely in browser session memory and is
-            only sent directly to <code>api.github.com</code> in standard HTTP headers. No backend, no telemetry.
+            <strong>How your token is handled:</strong> It is kept in this tab's session storage and sent with
+            each lookup to the Repozyn server proxy, which forwards it to <code>api.github.com</code>. The proxy
+            does not log or store it, and it is cleared when you close the tab. Use a read-only token with no
+            extra scopes.
           </p>
         </div>
 
         {/* Input */}
         <div className="space-y-2 mb-4">
-          <label className="text-xs font-semibold text-slate-300 block">
+          <label htmlFor="github-token-input" className="text-xs font-semibold text-slate-300 block">
             Personal Access Token (classic or fine-grained)
           </label>
           <input
+            id="github-token-input"
+            ref={inputRef}
             type="password"
             value={tokenInput}
             onChange={(e) => setTokenInput(e.target.value)}

@@ -12,3 +12,23 @@ coverage
 .vscode
 .idea
 *.local
+.gitignore
+.gcloudignore
+
+# Secrets and credentials must never enter the build context or image
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*credentials*.json
+**/*service-account*.json
+**/*serviceaccount*.json
+**/.npmrc
+**/.netrc
+.gcloud
+.config/gcloud

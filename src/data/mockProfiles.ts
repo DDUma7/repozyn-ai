@@ -8,15 +8,25 @@ export interface MockProfile {
   repos: GitHubRepo[];
 }
 
+// Self-contained initials avatar so demo personas render without any network access
+function initialsAvatar(initials: string, background: string): string {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">` +
+    `<rect width="150" height="150" fill="${background}"/>` +
+    `<text x="75" y="75" dy=".35em" text-anchor="middle" font-family="system-ui,sans-serif" font-size="60" font-weight="700" fill="#ffffff">${initials}</text>` +
+    `</svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 export const MOCK_PROFILES: MockProfile[] = [
   {
     id: 'tutorial-hoarder',
     name: 'Alex "The Cloner" Morgan',
-    tagline: 'Forked 28 repos during tutorials, completed 0 of them.',
+    tagline: '5 of 7 repos are tutorial forks. No bio, no licenses, no live demos.',
     user: {
       login: 'alex-tutorial-hoarder',
       id: 991001,
-      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      avatar_url: initialsAvatar('AM', '#e11d48'),
       html_url: 'https://github.com/alex-tutorial-hoarder',
       name: 'Alex Morgan',
       company: null,
@@ -26,7 +36,7 @@ export const MOCK_PROFILES: MockProfile[] = [
       hireable: true,
       bio: null,
       twitter_username: null,
-      public_repos: 32,
+      public_repos: 7,
       public_gists: 0,
       followers: 2,
       following: 110,
@@ -196,16 +206,43 @@ export const MOCK_PROFILES: MockProfile[] = [
         has_pages: false,
         default_branch: 'main',
       },
+      {
+        id: 107,
+        name: 'react-todo-app-tutorial',
+        full_name: 'alex-tutorial-hoarder/react-todo-app-tutorial',
+        html_url: 'https://github.com/alex-tutorial-hoarder/react-todo-app-tutorial',
+        description: null,
+        fork: true,
+        created_at: '2023-07-09T10:00:00Z',
+        updated_at: '2023-07-09T10:00:00Z',
+        pushed_at: '2023-07-09T10:00:00Z',
+        homepage: null,
+        size: 900,
+        stargazers_count: 0,
+        watchers_count: 0,
+        language: 'JavaScript',
+        forks_count: 0,
+        archived: false,
+        disabled: false,
+        open_issues_count: 0,
+        license: null,
+        topics: [],
+        has_issues: true,
+        has_projects: false,
+        has_wiki: false,
+        has_pages: false,
+        default_branch: 'main',
+      },
     ],
   },
   {
     id: 'open-source-chad',
     name: 'Sarah "The Architect" Chen',
-    tagline: 'High star count, automated CI/CD, 100% licenses, live production apps.',
+    tagline: '3 original repos, 6,770 stars, all licensed, 2 with live demos.',
     user: {
       login: 'sarah-oss-architect',
       id: 991002,
-      avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+      avatar_url: initialsAvatar('SC', '#059669'),
       html_url: 'https://github.com/sarah-oss-architect',
       name: 'Sarah Chen',
       company: '@CloudScaleTech',
@@ -215,7 +252,7 @@ export const MOCK_PROFILES: MockProfile[] = [
       hireable: true,
       bio: 'Staff Systems Engineer building distributed caching tools in Rust & Go. Speaker & open-source contributor.',
       twitter_username: 'sarahchen_dev',
-      public_repos: 14,
+      public_repos: 3,
       public_gists: 12,
       followers: 1840,
       following: 190,
@@ -324,11 +361,11 @@ export const MOCK_PROFILES: MockProfile[] = [
   {
     id: 'framework-hopper',
     name: 'Devon "The Shiny Object" Vance',
-    tagline: '18 repos, 8 languages, 0 deployed projects, every repo has 2 commits.',
+    tagline: '4 experiments in 4 languages, none deployed, last push in 2023.',
     user: {
       login: 'devon-shiny-tech',
       id: 991003,
-      avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      avatar_url: initialsAvatar('DV', '#4f46e5'),
       html_url: 'https://github.com/devon-shiny-tech',
       name: 'Devon Vance',
       company: null,
@@ -338,7 +375,7 @@ export const MOCK_PROFILES: MockProfile[] = [
       hireable: null,
       bio: 'Enthusiastic explorer of bleeding edge technologies. Rust, Zig, Gleam, Bun, Elixir, Mojo!',
       twitter_username: null,
-      public_repos: 18,
+      public_repos: 4,
       public_gists: 1,
       followers: 12,
       following: 85,
