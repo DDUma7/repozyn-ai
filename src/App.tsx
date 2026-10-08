@@ -12,7 +12,6 @@ import { MarkdownReportModal } from './components/MarkdownReportModal';
 import {
   fetchGitHubUser,
   fetchGitHubRepos,
-  fetchGitHubEvents,
   checkRateLimit,
   GitHubApiError,
 } from './services/github';
@@ -59,26 +58,16 @@ export function App() {
     setError(null);
 
     try {
-      // 1. Fetch user profile
+      // 1. Fetch user profile (proxy -> direct fallback, cached)
       const userRes = await fetchGitHubUser(username, token);
       setRateLimit(userRes.rateLimit);
 
-      // 2. Fetch public repos
+      // 2. Fetch public repos (proxy -> direct fallback, cached)
       const reposRes = await fetchGitHubRepos(username, token);
       setRateLimit(reposRes.rateLimit);
 
-      // 3. Fetch events (graceful fallback)
-      let events: any[] = [];
-      try {
-        const eventsRes = await fetchGitHubEvents(username, token);
-        events = eventsRes.data;
-        if (eventsRes.rateLimit) setRateLimit(eventsRes.rateLimit);
-      } catch {
-        // Non-fatal
-      }
-
-      // 4. Run portfolio analyzer
-      const analysis = analyzePortfolio(userRes.data, reposRes.data, events, false);
+      // 3. Run deterministic portfolio analyzer with zero redundant API calls
+      const analysis = analyzePortfolio(userRes.data, reposRes.data, [], false);
       setReport(analysis);
       setCompactSearch('');
 
@@ -134,6 +123,8 @@ export function App() {
             isLoading={isLoading}
             error={error}
             onClearError={() => setError(null)}
+            onOpenTokenModal={() => setIsTokenModalOpen(true)}
+            rateLimit={rateLimit}
           />
         ) : (
           /* Active Portfolio Dashboard */

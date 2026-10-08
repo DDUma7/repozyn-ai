@@ -75,4 +75,6 @@ export interface RateLimitInfo {
   reset: number; // Unix timestamp in seconds
   used: number;
   resetMinutes: number;
+  resetTimeFormatted?: string;
 }
+

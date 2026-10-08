@@ -36,7 +36,121 @@ const SECURITY_HEADERS = {
   'X-XSS-Protection': '1; mode=block',
 };
 
-const server = http.createServer((req, res) => {
+// In-memory cache for GitHub API proxy to conserve rate limits across all clients
+const apiCache = new Map();
+const API_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+const GITHUB_USERNAME_REGEX = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/;
+
+async function handleGitHubProxy(req, res, pathname) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-github-token');
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  if (req.method !== 'GET') {
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method Not Allowed' }));
+    return;
+  }
+
+  // Token priority: Client header > Server environment variable (never leaked to browser)
+  const clientToken = req.headers['x-github-token'];
+  const serverToken = process.env.GITHUB_TOKEN;
+  const authToken = clientToken || serverToken;
+
+  let targetUrl = '';
+  let cacheKey = '';
+
+  if (pathname === '/api/github/rate_limit') {
+    targetUrl = 'https://api.github.com/rate_limit';
+  } else if (pathname.startsWith('/api/github/user/')) {
+    const username = pathname.replace('/api/github/user/', '').trim();
+    if (!GITHUB_USERNAME_REGEX.test(username)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Invalid GitHub username format' }));
+      return;
+    }
+    targetUrl = `https://api.github.com/users/${encodeURIComponent(username)}`;
+    cacheKey = `user:${username.toLowerCase()}`;
+  } else if (pathname.startsWith('/api/github/repos/')) {
+    const username = pathname.replace('/api/github/repos/', '').trim();
+    if (!GITHUB_USERNAME_REGEX.test(username)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Invalid GitHub username format' }));
+      return;
+    }
+    targetUrl = `https://api.github.com/users/${encodeURIComponent(username)}/repos?per_page=100&sort=updated&direction=desc`;
+    cacheKey = `repos:${username.toLowerCase()}`;
+  } else {
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Not Found' }));
+    return;
+  }
+
+  // Serve from memory cache if available and not using private client token
+  if (cacheKey && !clientToken) {
+    const cached = apiCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < API_CACHE_TTL_MS) {
+      res.setHeader('x-cache', 'HIT');
+      for (const [k, v] of Object.entries(cached.headers)) {
+        res.setHeader(k, v);
+      }
+      res.writeHead(cached.status, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(cached.body);
+      return;
+    }
+  }
+
+  try {
+    const upstreamHeaders = {
+      Accept: 'application/vnd.github.v3+json',
+      'User-Agent': 'Repozyn-AI-CloudRun-Proxy',
+    };
+    if (authToken && String(authToken).trim()) {
+      upstreamHeaders.Authorization = `Bearer ${String(authToken).trim()}`;
+    }
+
+    const upstreamRes = await fetch(targetUrl, { headers: upstreamHeaders });
+    const body = await upstreamRes.text();
+
+    const forwardHeaders = {};
+    for (const h of ['x-ratelimit-limit', 'x-ratelimit-remaining', 'x-ratelimit-reset', 'x-ratelimit-used']) {
+      const val = upstreamRes.headers.get(h);
+      if (val) {
+        res.setHeader(h, val);
+        forwardHeaders[h] = val;
+      }
+    }
+    res.setHeader('x-cache', 'MISS');
+
+    // Cache successful responses
+    if (cacheKey && upstreamRes.status === 200 && !clientToken) {
+      if (apiCache.size > 200) {
+        const oldest = apiCache.keys().next().value;
+        if (oldest) apiCache.delete(oldest);
+      }
+      apiCache.set(cacheKey, {
+        status: upstreamRes.status,
+        headers: forwardHeaders,
+        body,
+        timestamp: Date.now(),
+      });
+    }
+
+    res.writeHead(upstreamRes.status, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(body);
+  } catch {
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Bad Gateway: Unable to communicate with upstream GitHub API' }));
+  }
+}
+
+const server = http.createServer(async (req, res) => {
   // Add security headers to all responses
   for (const [header, val] of Object.entries(SECURITY_HEADERS)) {
     res.setHeader(header, val);
@@ -49,9 +163,16 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Parse path and sanitize against directory traversal
   const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
-  let pathname = decodeURIComponent(parsedUrl.pathname);
+  const pathname = decodeURIComponent(parsedUrl.pathname);
+
+  // GitHub API Proxy endpoint
+  if (pathname.startsWith('/api/github/')) {
+    await handleGitHubProxy(req, res, pathname);
+    return;
+  }
+
+  // Sanitize against directory traversal
   if (pathname.includes('\0')) {
     res.writeHead(400);
     res.end('Bad Request');

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type React from 'react';
-import { Loader2, Sparkles, AlertCircle, ArrowRight, ShieldCheck, Flame } from 'lucide-react';
+import { Loader2, Sparkles, AlertCircle, ArrowRight, ShieldCheck, Flame, Clock, Key } from 'lucide-react';
 import { MOCK_PROFILES, type MockProfile } from '../data/mockProfiles';
+import type { RateLimitInfo } from '../types/github';
 
 interface SearchHeroProps {
   onSearch: (username: string) => void;
@@ -9,6 +10,8 @@ interface SearchHeroProps {
   isLoading: boolean;
   error: string | null;
   onClearError: () => void;
+  onOpenTokenModal?: () => void;
+  rateLimit?: RateLimitInfo | null;
 }
 
 const POPULAR_HANDLES = ['torvalds', 'gaearon', 'shadcn', 'sindresorhus'];
@@ -19,8 +22,13 @@ export const SearchHero: React.FC<SearchHeroProps> = ({
   isLoading,
   error,
   onClearError,
+  onOpenTokenModal,
+  rateLimit,
 }) => {
   const [inputVal, setInputVal] = useState('');
+  const isRateLimitError = Boolean(
+    error && (error.toLowerCase().includes('rate limit') || error.includes('403'))
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,14 +108,97 @@ export const SearchHero: React.FC<SearchHeroProps> = ({
         </div>
       </form>
 
-      {/* Error message */}
+      {/* Error message / Rate Limit Recovery Banner */}
       {error && (
-        <div role="alert" aria-live="assertive" className="max-w-2xl mx-auto mb-6 p-4 rounded-xl bg-rose-950/60 border border-rose-800/80 text-left flex items-start gap-3 shadow-lg">
-          <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" aria-hidden="true" />
-          <div className="text-sm text-rose-200">
-            <p className="font-semibold mb-1">Analysis Error</p>
-            <p className="text-rose-300/90 text-xs sm:text-sm">{error}</p>
-          </div>
+        <div
+          role="alert"
+          aria-live="assertive"
+          className={`max-w-2xl mx-auto mb-6 p-4 sm:p-5 rounded-2xl text-left shadow-xl transition-all ${
+            isRateLimitError
+              ? 'bg-amber-950/40 border border-amber-600/50'
+              : 'bg-rose-950/60 border border-rose-800/80'
+          }`}
+        >
+          {isRateLimitError ? (
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <p className="font-semibold text-amber-200 text-sm">
+                      GitHub IP Rate Limit Reached (0/60 requests remaining)
+                    </p>
+                    <span className="px-2 py-0.5 text-[11px] font-mono rounded bg-amber-900/60 text-amber-300 border border-amber-700/50">
+                      Resets {rateLimit?.resetMinutes ? `in ~${rateLimit.resetMinutes} min` : 'soon'}
+                      {rateLimit?.resetTimeFormatted ? ` (${rateLimit.resetTimeFormatted})` : ''}
+                    </span>
+                  </div>
+                  <p className="text-amber-200/80 text-xs mt-1.5 leading-relaxed">
+                    On university, campus, or public Wi-Fi networks, GitHub's unauthenticated 60 req/hr IP pool is quickly exhausted. Choose an instant recovery option below:
+                  </p>
+                </div>
+              </div>
+
+              {/* Action recovery options */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                {/* Option 1: Demo profiles */}
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-700/60 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>1-Click Offline Personas</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-normal mb-2.5">
+                      Explore full portfolios instantly with zero API consumption.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {MOCK_PROFILES.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          onClearError();
+                          onSelectMock(p);
+                        }}
+                        className="px-2 py-1 text-[11px] font-medium rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-200 border border-indigo-700/50 transition flex items-center gap-1"
+                      >
+                        <span>{p.user.login}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Option 2: Add personal token */}
+                {onOpenTokenModal && (
+                  <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-700/60 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1">
+                        <Key className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Add Personal Token</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-normal mb-2.5">
+                        Free GitHub Personal Access Tokens grant <strong>5,000 req/hr</strong> immediately.
+                      </p>
+                    </div>
+                    <button
+                      onClick={onOpenTokenModal}
+                      className="w-full py-1.5 px-3 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-600/40 text-[11px] font-medium transition text-center"
+                    >
+                      Configure Free Token
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" aria-hidden="true" />
+              <div className="text-sm text-rose-200">
+                <p className="font-semibold mb-1">Analysis Error</p>
+                <p className="text-rose-300/90 text-xs sm:text-sm">{error}</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
