@@ -115,7 +115,7 @@ describe('Portfolio Rescue Simulator Engine', () => {
 
     // Must include explicit assumption limitations
     expect(result.assumptionsAndLimits.some((s) => s.includes('Community Stars'))).toBe(true);
-    expect(result.assumptionsAndLimits.some((s) => s.includes('Original Project Ratio'))).toBe(true);
+    expect(result.assumptionsAndLimits.some((s) => s.includes('Non-fork repository ratio'))).toBe(true);
   });
 
   it('handles 0-repository profiles with realistic preconditions (no phantom repo gains)', () => {

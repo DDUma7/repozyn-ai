@@ -50,15 +50,15 @@ export const HealthScoreSection: React.FC<HealthScoreSectionProps> = ({ scoring 
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="premium-panel rounded-3xl border border-slate-700/70 bg-slate-900/70 p-5 sm:p-6 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-950/40 border border-indigo-700/50 text-indigo-300">
               <Shield className="w-3.5 h-3.5 text-indigo-400" />
               TRANSPARENT 4-PILLAR RUBRIC
             </span>
-            <h3 className="text-xl sm:text-2xl font-extrabold text-white">Portfolio Health Breakdown</h3>
+            <h3 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">Portfolio Health Breakdown</h3>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Every point is deterministically calculated from your public repository metadata. No black-box guessing.
@@ -72,7 +72,7 @@ export const HealthScoreSection: React.FC<HealthScoreSectionProps> = ({ scoring 
       </div>
 
       {/* 4 Pillars Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         {categories.map(({ data, icon: Icon, color, bgColor }) => {
           const isExpanded = expandedCategory === data.label;
           const percentage = Math.round((data.score / data.maxScore) * 100);
@@ -80,11 +80,11 @@ export const HealthScoreSection: React.FC<HealthScoreSectionProps> = ({ scoring 
           return (
             <div
               key={data.label}
-              className="rounded-2xl bg-slate-900/90 border border-slate-800 p-5 shadow-lg hover:border-slate-700 transition"
+              className="rounded-2xl bg-slate-950/60 border border-slate-800 p-4 hover:border-slate-700 transition"
             >
               {/* Pillar Header */}
-              <div className="flex items-start justify-between gap-4 mb-3">
-                <div className="flex items-center gap-3">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className="flex flex-col items-start gap-2">
                   <div className={`p-2 rounded-xl border ${bgColor}`}>
                     <Icon className="w-4 h-4" />
                   </div>
@@ -96,14 +96,21 @@ export const HealthScoreSection: React.FC<HealthScoreSectionProps> = ({ scoring 
 
                 <div className="text-right shrink-0">
                   <div className="font-mono font-bold text-base text-white">
-                    {data.score} <span className="text-xs text-slate-500">/ {data.maxScore}</span>
+                    {data.score} <span className="text-xs text-slate-400">/ {data.maxScore}</span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-mono">{percentage}%</span>
+                  <span className="text-[11px] text-slate-400 font-mono">{percentage}%</span>
                 </div>
               </div>
 
               {/* Progress bar */}
-              <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden mb-3">
+              <div
+                role="progressbar"
+                aria-label={`${data.label} score`}
+                aria-valuemin={0}
+                aria-valuemax={data.maxScore}
+                aria-valuenow={data.score}
+                className="w-full h-2 rounded-full bg-slate-800 overflow-hidden mb-3"
+              >
                 <div
                   className={`h-full bg-gradient-to-r ${color} rounded-full transition-all duration-700`}
                   style={{ width: `${percentage}%` }}
@@ -112,6 +119,9 @@ export const HealthScoreSection: React.FC<HealthScoreSectionProps> = ({ scoring 
 
               {/* Toggle details */}
               <button
+                type="button"
+                aria-expanded={isExpanded}
+                aria-label={`${isExpanded ? 'Hide' : 'Show'} point breakdown for ${data.label}`}
                 onClick={() => toggleExpand(data.label)}
                 className="w-full flex items-center justify-between text-[11px] text-slate-400 hover:text-slate-200 transition pt-2 border-t border-slate-800/80 font-medium"
               >
@@ -129,7 +139,7 @@ export const HealthScoreSection: React.FC<HealthScoreSectionProps> = ({ scoring 
                     >
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold text-slate-200">{detail.name}</div>
-                        <div className="text-[11px] text-slate-400 truncate">{detail.reason}</div>
+                        <div className="text-xs leading-relaxed text-slate-400">{detail.reason}</div>
                       </div>
                       <div className="font-mono font-bold text-indigo-400 shrink-0 text-xs">
                         +{detail.earned} / {detail.max}

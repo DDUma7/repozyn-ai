@@ -192,17 +192,21 @@ export function calculateHealthScore(facts: PortfolioFacts): HealthScoreBreakdow
 
   // Original vs Fork ratio (15 pts)
   const origRatio = facts.analyzedReposCount > 0 ? facts.originalReposCount / facts.analyzedReposCount : 1;
+  const hasRepos = facts.analyzedReposCount > 0;
   let ratioEarned = 0;
-  if (origRatio >= 0.75) ratioEarned = 15;
+  if (!hasRepos) ratioEarned = 0;
+  else if (origRatio >= 0.75) ratioEarned = 15;
   else if (origRatio >= 0.5) ratioEarned = 10;
   else if (origRatio >= 0.25) ratioEarned = 5;
   else ratioEarned = 2;
   origPoints += ratioEarned;
   origDetails.push({
-    name: 'Original Projects Ratio',
+    name: 'Non-Fork Repositories Ratio',
     earned: ratioEarned,
     max: 15,
-    reason: `${Math.round(origRatio * 100)}% of repos are original creations (${facts.originalReposCount} original vs ${facts.forkedReposCount} forks)`,
+    reason: hasRepos
+      ? `${Math.round(origRatio * 100)}% of repos are not forks (${facts.originalReposCount} non-fork vs ${facts.forkedReposCount} forks)`
+      : 'No public repositories yet, so there is nothing to assess',
   });
 
   // Traction & Stars (10 pts)
@@ -242,7 +246,8 @@ export function calculateHealthScore(facts: PortfolioFacts): HealthScoreBreakdow
   // Stale project management (10 pts)
   const staleRatio = facts.analyzedReposCount > 0 ? facts.staleReposCount / facts.analyzedReposCount : 0;
   let staleEarned = 0;
-  if (staleRatio <= 0.25) staleEarned = 10;
+  if (!hasRepos) staleEarned = 0;
+  else if (staleRatio <= 0.25) staleEarned = 10;
   else if (staleRatio <= 0.5) staleEarned = 7;
   else if (staleRatio <= 0.75) staleEarned = 4;
   else staleEarned = 2;
@@ -251,7 +256,9 @@ export function calculateHealthScore(facts: PortfolioFacts): HealthScoreBreakdow
     name: 'Active vs Stale Ratio',
     earned: staleEarned,
     max: 10,
-    reason: `${facts.staleReposCount} of ${facts.analyzedReposCount} repos untouched for > 1 year (${Math.round(staleRatio * 100)}% stale)`,
+    reason: hasRepos
+      ? `${facts.staleReposCount} of ${facts.analyzedReposCount} repos untouched for > 1 year (${Math.round(staleRatio * 100)}% stale)`
+      : 'No public repositories yet, so there is nothing to assess',
   });
 
   // 4. Professional Hygiene (Max 25)
@@ -319,7 +326,7 @@ export function calculateHealthScore(facts: PortfolioFacts): HealthScoreBreakdow
 
   let summary = '';
   if (totalScore >= 80) {
-    summary = 'Top-tier portfolio hygiene! Strong project presentation, solid license coverage, and clear momentum.';
+    summary = 'Strong on every measured signal: descriptions, licenses, live links and recent activity.';
   } else if (totalScore >= 65) {
     summary = 'Solid foundation with clear strengths, but needs key documentation and demo links to maximize recruiter interest.';
   } else if (totalScore >= 45) {
@@ -343,8 +350,8 @@ export function calculateHealthScore(facts: PortfolioFacts): HealthScoreBreakdow
     originality: {
       score: origPoints,
       maxScore: 25,
-      label: 'Originality & Independence',
-      explanation: 'Evaluates original projects vs tutorial clones and stars earned.',
+      label: 'Own Work & Traction',
+      explanation: 'Share of repositories that are not forks, and stars received. Does not judge whether code is original.',
       details: origDetails,
     },
     maintenance: {
@@ -373,7 +380,14 @@ export function determineRecruiterImpression(facts: PortfolioFacts): RecruiterIm
   let archetypeDescription = 'Shows a diverse mix of learning experiments and working repositories.';
   let firstImpressionQuote = 'Looks like a developer who writes code consistently, but could present their best work with greater intention.';
 
-  if (origRatio < 0.4 && facts.forkedReposCount >= 5) {
+  const isEmptyProfile = facts.analyzedReposCount === 0;
+
+  if (isEmptyProfile) {
+    archetype = 'The Blank Slate';
+    archetypeBadge = 'Getting Started';
+    archetypeDescription = 'There are no public repositories yet, so a reviewer has nothing to evaluate.';
+    firstImpressionQuote = 'I cannot tell what this person builds yet. One finished, documented project would change that.';
+  } else if (origRatio < 0.4 && facts.forkedReposCount >= 5) {
     archetype = 'The Fork Collector / Tutorial Hoarder';
     archetypeBadge = 'Tutorial Collector';
     archetypeDescription = 'Portfolio is overwhelmed by forks and walkthrough starters with little visible independent architecture.';
@@ -391,8 +405,8 @@ export function determineRecruiterImpression(facts: PortfolioFacts): RecruiterIm
   } else if (facts.totalStarsEarned >= 200 && origRatio >= 0.7 && facts.reposWithLicensePercentage >= 60) {
     archetype = 'The Open Source Trailblazer';
     archetypeBadge = 'OSS Leader';
-    archetypeDescription = 'High credibility, genuine community traction, well-documented codebases, and strong license practices.';
-    firstImpressionQuote = 'Instant interview fast-track. This profile shows real engineering rigor and community adoption.';
+    archetypeDescription = 'Many stars, mostly non-fork repositories and consistent licensing: the public signals reviewers look for first.';
+    firstImpressionQuote = 'This profile gets a closer look: other people clearly use this work, and it is presented with care.';
   } else if (facts.reposWithDemoUrlCount >= 2 && ['TypeScript', 'JavaScript'].some((l) => facts.topLanguages.includes(l))) {
     archetype = 'The Product Crafter';
     archetypeBadge = 'Product Focused';
@@ -405,10 +419,14 @@ export function determineRecruiterImpression(facts: PortfolioFacts): RecruiterIm
   let hireabilityBadgeColor = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40';
   let hireabilityReason = 'Clear engineering potential with minor presentation gaps.';
 
-  if (facts.totalStarsEarned >= 50 && facts.daysSinceLastPush <= 30 && facts.reposWithDemoUrlCount >= 2) {
+  if (isEmptyProfile) {
+    hireabilitySignal = 'Needs Overhaul';
+    hireabilityBadgeColor = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+    hireabilityReason = 'There is no public work to review yet.';
+  } else if (facts.totalStarsEarned >= 50 && facts.daysSinceLastPush <= 30 && facts.reposWithDemoUrlCount >= 2) {
     hireabilitySignal = 'Strong';
     hireabilityBadgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
-    hireabilityReason = 'Strong portfolio presence with active commits, verifiable original projects, and live demos.';
+    hireabilityReason = 'Recent activity, starred non-fork repositories and live demo links.';
   } else if (facts.daysSinceLastPush > 180 && facts.reposWithDescriptionPercentage < 30) {
     hireabilitySignal = 'Needs Overhaul';
     hireabilityBadgeColor = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
@@ -416,7 +434,7 @@ export function determineRecruiterImpression(facts: PortfolioFacts): RecruiterIm
   } else if (origRatio < 0.35 || facts.daysSinceLastPush > 90) {
     hireabilitySignal = 'Caution';
     hireabilityBadgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
-    hireabilityReason = 'Inconsistent original project signals or prolonged inactive gap.';
+    hireabilityReason = 'Mostly forked repositories, or a long gap since the last public push.';
   }
 
   // Green Flags & Red Flags
@@ -445,7 +463,13 @@ export function determineRecruiterImpression(facts: PortfolioFacts): RecruiterIm
     });
   }
 
-  if (facts.daysSinceLastPush <= 14) {
+  if (isEmptyProfile) {
+    redFlags.push({
+      title: 'No Public Repositories',
+      evidence: 'The profile has 0 public repositories, so there is no code, README or demo to look at.',
+      impact: 'critical',
+    });
+  } else if (facts.daysSinceLastPush <= 14) {
     greenFlags.push({
       title: 'Active Coding Cadence',
       evidence: `Pushed code ${facts.daysSinceLastPush} days ago. Demonstrates current engagement.`,
@@ -473,7 +497,9 @@ export function determineRecruiterImpression(facts: PortfolioFacts): RecruiterIm
     });
   }
 
-  if (facts.reposWithDescriptionPercentage < 50) {
+  if (isEmptyProfile) {
+    // Nothing to document yet: neither a strength nor a gap
+  } else if (facts.reposWithDescriptionPercentage < 50) {
     redFlags.push({
       title: 'Undocumented Repositories',
       evidence: `${facts.analyzedReposCount - facts.reposWithDescriptionCount} out of ${facts.analyzedReposCount} repos lack a 1-sentence description.`,
@@ -490,7 +516,7 @@ export function determineRecruiterImpression(facts: PortfolioFacts): RecruiterIm
   if (origRatio < 0.5 && facts.analyzedReposCount >= 5) {
     redFlags.push({
       title: 'Excessive Fork Clutter',
-      evidence: `${facts.forkedReposCount} out of ${facts.analyzedReposCount} repositories (${Math.round((1 - origRatio) * 100)}%) are forks rather than original code.`,
+      evidence: `${facts.forkedReposCount} out of ${facts.analyzedReposCount} repositories (${Math.round((1 - origRatio) * 100)}%) are forks.`,
       impact: 'warning',
     });
   }
@@ -503,9 +529,10 @@ export function determineRecruiterImpression(facts: PortfolioFacts): RecruiterIm
     });
   }
 
-  const tenSecondVerdict =
-    hireabilitySignal === 'Strong'
-      ? 'A recruiter reviewing this profile will immediately see production credibility, clean code habits, and verifiable results.'
+  const tenSecondVerdict = isEmptyProfile
+    ? 'A recruiter has nothing to look at yet and will move on. One finished, documented project changes that.'
+    : hireabilitySignal === 'Strong'
+      ? 'A recruiter will immediately see active, starred projects with live demos to click. Code quality itself is not assessed here.'
       : hireabilitySignal === 'Promising'
       ? 'A recruiter will see genuine engineering capability, but might hesitate to click deeper without live demos and concise descriptions.'
       : 'A recruiter is likely to move on to the next candidate because the portfolio requires too much detective work to evaluate.';
@@ -527,6 +554,29 @@ export function determineRecruiterImpression(facts: PortfolioFacts): RecruiterIm
 export function generateEvidenceBasedRoasts(facts: PortfolioFacts): RoastItem[] {
   const roasts: RoastItem[] = [];
 
+  // An empty profile: one gentle, truthful roast. None of the repository-based ones apply.
+  if (facts.analyzedReposCount === 0) {
+    roasts.push({
+      id: 'roast-empty',
+      title: 'The Blank Canvas',
+      category: 'repo-hygiene',
+      severity: 'mild',
+      evidence: '0 public repositories on the profile',
+      roast: `Your GitHub is so clean it squeaks. Minimalism is a fine design philosophy, but reviewers were hoping for at least one thing to click on. The upside: with nothing to tidy up, your first project is automatically your best one.`,
+    });
+    if (!facts.hasBio && !facts.hasWebsite) {
+      roasts.push({
+        id: 'roast-bio',
+        title: 'The Phantom Developer',
+        category: 'social-presence',
+        severity: 'medium',
+        evidence: `Bio is empty, Website is empty${facts.hasLocation ? '' : ', Location is empty'}`,
+        roast: `No repositories and no bio: your profile is giving "account created during a fire drill". Two sentences about what you want to build would already make it feel like a person lives here.`,
+      });
+    }
+    return roasts;
+  }
+
   // 1. Description roast
   if (facts.reposWithDescriptionPercentage < 60) {
     const missing = facts.analyzedReposCount - facts.reposWithDescriptionCount;
@@ -545,7 +595,10 @@ export function generateEvidenceBasedRoasts(facts: PortfolioFacts): RoastItem[] 
       category: 'repo-hygiene',
       severity: 'mild',
       evidence: `${facts.reposWithDescriptionPercentage}% description coverage across ${facts.analyzedReposCount} repos`,
-      roast: `You actually write descriptions, which is more than a lot of profiles manage. Now if only the descriptions didn't all sound like they were written at 3:45 AM during finals week.`,
+      roast:
+        facts.reposWithDescriptionCount < facts.analyzedReposCount
+          ? `You actually write descriptions, which is more than a lot of profiles manage. The other ${facts.analyzedReposCount - facts.reposWithDescriptionCount} ${facts.analyzedReposCount - facts.reposWithDescriptionCount === 1 ? 'repository is' : 'repositories are'} still sitting there like a book with a blank cover.`
+          : `Every single repository has a description. Suspiciously organised. We checked twice for a catch and came back empty-handed.`,
     });
   }
 
@@ -644,7 +697,7 @@ export function generateEvidenceBasedRoasts(facts: PortfolioFacts): RoastItem[] 
       title: 'The Phantom Developer',
       category: 'social-presence',
       severity: 'medium',
-      evidence: `Bio is empty, Website is empty, Location is empty`,
+      evidence: `Bio is empty, Website is empty${facts.hasLocation ? '' : ', Location is empty'}`,
       roast: `Your GitHub profile is so anonymous you could apply for witness protection. Recruiters don't know your name, your favorite stack, or how to email you an offer letter.`,
     });
   }
@@ -665,10 +718,27 @@ export function filterRoastsByTone(roasts: RoastItem[], tone: RoastTone): RoastI
 
 export function generatePersonalizedRoadmap(facts: PortfolioFacts): RoadmapActionItem[] {
   const items: RoadmapActionItem[] = [];
+  const isEmptyProfile = facts.analyzedReposCount === 0;
+
+  // 0. Nothing published yet: the first project comes before everything else
+  if (isEmptyProfile) {
+    items.push({
+      id: 'action-first-project',
+      title: 'Publish Your First Project',
+      description: 'Pick one small thing you have built or are building (a class assignment, a script, a tiny website) and put it on GitHub. Finished and small beats ambitious and missing.',
+      priority: 'critical',
+      effort: 'Weekend project',
+      impactScore: 10,
+      category: 'Showcase',
+      evidence: 'The profile has 0 public repositories.',
+      actionStep: `On GitHub click "New repository", name it after what it does, tick "Add a README file", then upload or push your code and write three lines in the README: what it is, how to run it, what you learned.`,
+    });
+  }
 
   // 1. Descriptions
-  if (facts.reposWithDescriptionPercentage < 80) {
+  if (!isEmptyProfile && facts.reposWithDescriptionPercentage < 80) {
     items.push({
+      evidence: `${facts.analyzedReposCount - facts.reposWithDescriptionCount} of ${facts.analyzedReposCount} repositories have no description (${facts.reposWithDescriptionPercentage}% have one).`,
       id: 'action-descriptions',
       title: 'Add 1-Sentence Descriptions to Top Repositories',
       description: `Immediately update the 'About' section on your top repositories. State the problem solved and the primary stack.`,
@@ -687,6 +757,7 @@ export function generatePersonalizedRoadmap(facts: PortfolioFacts): RoadmapActio
   // 2. Live Demos
   if (facts.reposWithDemoUrlCount === 0 && facts.originalReposCount > 0) {
     items.push({
+      evidence: `0 of ${facts.originalReposCount} original repositories have a live demo or website link.`,
       id: 'action-deploy-demo',
       title: 'Deploy Free Live Previews on Vercel or GitHub Pages',
       description: 'Reviewers skim profiles quickly. Give them a clickable live product immediately.',
@@ -701,6 +772,7 @@ export function generatePersonalizedRoadmap(facts: PortfolioFacts): RoadmapActio
   // 3. License Coverage
   if (facts.reposWithLicensePercentage < 50 && facts.originalReposCount > 0) {
     items.push({
+      evidence: `${facts.reposWithLicenseCount} of ${facts.originalReposCount} original repositories have a license (${facts.reposWithLicensePercentage}%).`,
       id: 'action-add-license',
       title: 'Add MIT Open-Source Licenses',
       description: 'Give recruiters and collaborators clear legal permission to clone and run your public projects.',
@@ -729,7 +801,11 @@ copies or substantial portions of the Software.`,
   }
 
   // 4. Profile README
+  const hasProfileRepo = facts.allRepos.some((r) => r.name.toLowerCase() === facts.username.toLowerCase());
   items.push({
+    evidence: hasProfileRepo
+      ? `A repository named "${facts.username}" exists. Its README was not read, so check that it introduces you and your best work.`
+      : `No repository named "${facts.username}" was found among the ${facts.analyzedReposCount} analysed repositories, so the profile page shows no introduction.`,
     id: 'action-profile-readme',
     title: 'Create or Upgrade Profile README (`username/username`)',
     description: 'Transform your GitHub landing page into an interactive developer resume highlighting your best 2-3 projects and core strengths.',
@@ -757,20 +833,22 @@ copies or substantial portions of the Software.`,
   // 5. Clean up forks & inactive repos
   if (facts.forkedReposCount >= 5) {
     items.push({
+      evidence: `${facts.forkedReposCount} of ${facts.analyzedReposCount} repositories are forks.`,
       id: 'action-prune-forks',
-      title: 'Prune or Pin Original Projects Over Forks',
-      description: 'Ensure visitors see your original creative output rather than cloned tutorials and forks.',
+      title: 'Pin Your Own Projects Above Forks',
+      description: 'Make sure visitors see the repositories you started yourself before the ones you forked.',
       priority: 'high',
       effort: '< 15 mins',
       impactScore: 8,
       category: 'Credibility',
-      actionStep: `Go to your profile -> Click 'Customize your pins' -> Explicitly pin your 4-6 best original repositories so forks don't dominate your landing page.`,
+      actionStep: `Go to your profile -> Click 'Customize your pins' -> Explicitly pin your 4-6 best non-fork repositories so forks don't dominate your landing page.`,
     });
   }
 
   // 6. Cadence refresh
-  if (facts.daysSinceLastPush > 45) {
+  if (!isEmptyProfile && facts.daysSinceLastPush > 45 && facts.daysSinceLastPush !== 999) {
     items.push({
+      evidence: `The most recent public push was ${facts.daysSinceLastPush} days ago.`,
       id: 'action-push-momentum',
       title: 'Ignite Fresh Commit Momentum',
       description: 'Your contribution graph shows a quiet spell. Push a meaningful feature or refactor this week.',
@@ -807,3 +885,18 @@ export function analyzePortfolio(
     isMockData,
   };
 }
+
+const PRIORITY_RANK: Record<RoadmapActionItem['priority'], number> = { critical: 0, high: 1, medium: 2, low: 3 };
+
+/**
+ * The few actions to start with: most urgent first, then highest impact, keeping the roadmap's
+ * own order for ties. Pure and deterministic.
+ */
+export function selectTopRescuePriorities(roadmap: RoadmapActionItem[], count = 3): RoadmapActionItem[] {
+  return roadmap
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => PRIORITY_RANK[a.item.priority] - PRIORITY_RANK[b.item.priority] || b.item.impactScore - a.item.impactScore || a.index - b.index)
+    .slice(0, Math.max(0, count))
+    .map(({ item }) => item);
+}
+

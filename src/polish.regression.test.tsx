@@ -87,7 +87,8 @@ describe('Final cleanup: offline personas, unsupported claims and project link',
           ...report.roasts.map((r) => r.roast),
           ...report.roadmap.map((r) => `${r.title} ${r.description}`),
           ...getAvailableSimulatorActions(report.facts).map((a) => `${a.shortDescription} ${a.whyItMatters}`),
-          formatReportToMarkdown(report),
+          // "30-Second Scan" is the challenge's own framing of the recruiter view, used as a section label
+          formatReportToMarkdown(report).replace('(30-Second Scan)', ''),
         ].join('\n');
         expect(copy).not.toMatch(unsupported);
       }

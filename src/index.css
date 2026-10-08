@@ -30,6 +30,99 @@
   box-shadow: 0 0 35px -5px rgba(99, 102, 241, 0.35);
 }
 
+/* A lightweight visual system: system fonts, CSS surfaces, no remote assets. */
+.app-shell {
+  background-image: radial-gradient(ellipse at 12% 12%, rgba(99, 102, 241, 0.08), transparent 45%),
+    radial-gradient(ellipse at 90% 8%, rgba(251, 113, 133, 0.06), transparent 35%);
+}
+
+.hero-title {
+  text-wrap: balance;
+}
+
+.journey-panel {
+  box-shadow: 0 24px 80px -40px rgba(99, 102, 241, 0.35);
+}
+
+.premium-panel {
+  box-shadow: 0 12px 36px -24px rgba(0, 0, 0, 0.6);
+}
+
+.premium-panel, .hero-grid > *, .audit-dashboard > *, .rescue-priority {
+  min-width: 0;
+}
+
+.roast-panel {
+  border-top-color: rgba(251, 113, 133, 0.45);
+}
+
+.rescue-panel {
+  border-top-color: rgba(110, 231, 183, 0.4);
+}
+
+.analysis-disclosure summary::marker {
+  color: #a5b4fc;
+}
+
+/* Keep every dialog's controls reachable on phones and short, zoomed viewports. */
+.app-shell [role='dialog'] {
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.demo-card {
+  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+@media (hover: hover) {
+  .demo-card:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.animate-fadeIn {
+  animation: panel-enter 220ms ease-out both;
+}
+
+.skeleton-line {
+  animation: skeleton-pulse 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes panel-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes skeleton-pulse {
+  from { opacity: 0.4; }
+  to { opacity: 0.8; }
+}
+
+/* Visible keyboard focus on every interactive element, including ones without their own ring */
+.app-shell :where(a, button, input, select, textarea, summary, [tabindex], [role='button'], [role='checkbox'], [role='switch']):focus-visible {
+  outline: 2px solid #a5b4fc;
+  outline-offset: 2px;
+}
+
+/* Skip link: off-screen until focused */
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.5rem;
+  background: #4f46e5;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 0.75rem;
+}
+
 /* Accessible reduced-motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -39,5 +132,9 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .demo-card:hover {
+    transform: none;
   }
 }

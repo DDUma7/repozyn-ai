@@ -292,11 +292,11 @@ export const ProfileMakeoverModal: React.FC<ProfileMakeoverModalProps> = ({
                   GitHub Profile Makeover
                 </h3>
                 {report.isMockData ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-950/60 border border-amber-600/40 text-amber-300">
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-950/60 border border-amber-600/40 text-amber-300">
                     SAMPLE DEMO DATA
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/60 border border-emerald-600/40 text-emerald-300">
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-950/60 border border-emerald-600/40 text-emerald-300">
                     VERIFIED DATA ONLY
                   </span>
                 )}
@@ -347,7 +347,7 @@ export const ProfileMakeoverModal: React.FC<ProfileMakeoverModalProps> = ({
                     <Info className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                     <div>
                       <p className="font-semibold text-slate-200 text-[11px]">{item.label}</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5 leading-snug">{item.suggestion}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">{item.suggestion}</p>
                     </div>
                   </div>
                 ))}
@@ -397,7 +397,7 @@ export const ProfileMakeoverModal: React.FC<ProfileMakeoverModalProps> = ({
                 <span>Reset</span>
               </button>
             )}
-            <span className="font-mono text-[11px] text-slate-500">
+            <span className="font-mono text-[11px] text-slate-400">
               {markdown.length} chars • {markdown.split('\n').length} lines
             </span>
           </div>

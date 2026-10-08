@@ -78,7 +78,7 @@ export const PortfolioSimulatorSection: React.FC<PortfolioSimulatorSectionProps>
             <h3 className="text-xl font-bold text-white tracking-tight">
               Before & After Portfolio Rescue Simulator
             </h3>
-            <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-950/60 border border-indigo-700/50 text-indigo-300 font-mono">
+            <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-950/60 border border-indigo-700/50 text-indigo-300 font-mono">
               ESTIMATED PROJECTION
             </span>
           </div>
@@ -119,7 +119,7 @@ export const PortfolioSimulatorSection: React.FC<PortfolioSimulatorSectionProps>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
               {isMockData ? 'Sample Baseline' : 'Verified Baseline'}
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 font-mono">
+            <span className="px-2 py-0.5 rounded-full text-[11px] bg-slate-800 text-slate-400 font-mono">
               {isMockData ? 'SAMPLE' : 'ACTUAL'}
             </span>
           </div>
@@ -128,13 +128,13 @@ export const PortfolioSimulatorSection: React.FC<PortfolioSimulatorSectionProps>
               <span className="text-4xl font-black font-mono text-white tracking-tight">
                 {simulation.baselineScore}
               </span>
-              <span className="text-xs text-slate-500 font-mono ml-1">/ 100</span>
+              <span className="text-xs text-slate-400 font-mono ml-1">/ 100</span>
             </div>
             <div className={`text-3xl font-black font-mono ${simulation.baselineGradeColor}`}>
               {simulation.baselineGrade}
             </div>
           </div>
-          <p className="text-[11px] text-slate-500 mt-2">
+          <p className="text-[11px] text-slate-400 mt-2">
             {isMockData
               ? 'Synthetic demo persona — not real GitHub data'
               : 'Verified GitHub REST API portfolio audit'}
@@ -154,12 +154,12 @@ export const PortfolioSimulatorSection: React.FC<PortfolioSimulatorSectionProps>
           </div>
           <div className="flex items-center gap-2 text-xs font-mono text-slate-300 mt-1">
             <span className={simulation.baselineGradeColor}>{simulation.baselineGrade}</span>
-            <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
+            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
             <span className={`font-bold ${simulation.simulatedGradeColor}`}>
               {simulation.simulatedGrade}
             </span>
           </div>
-          <span className="text-[10px] text-slate-400 mt-2">
+          <span className="text-[11px] text-slate-400 mt-2">
             {simulation.activeActionCount} improvement{simulation.activeActionCount === 1 ? '' : 's'} toggled
           </span>
         </div>
@@ -171,7 +171,7 @@ export const PortfolioSimulatorSection: React.FC<PortfolioSimulatorSectionProps>
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
               Projected Score
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-950/80 border border-emerald-600/50 text-emerald-300 font-mono font-semibold">
+            <span className="px-2 py-0.5 rounded-full text-[11px] bg-emerald-950/80 border border-emerald-600/50 text-emerald-300 font-mono font-semibold">
               ESTIMATED
             </span>
           </div>
@@ -180,7 +180,7 @@ export const PortfolioSimulatorSection: React.FC<PortfolioSimulatorSectionProps>
               <span className="text-4xl font-black font-mono text-emerald-400 tracking-tight">
                 {simulation.simulatedScore}
               </span>
-              <span className="text-xs text-slate-500 font-mono ml-1">/ 100</span>
+              <span className="text-xs text-slate-400 font-mono ml-1">/ 100</span>
             </div>
             <div className={`text-3xl font-black font-mono ${simulation.simulatedGradeColor}`}>
               {simulation.simulatedGrade}
@@ -196,7 +196,7 @@ export const PortfolioSimulatorSection: React.FC<PortfolioSimulatorSectionProps>
       <div className="mb-8 p-5 rounded-2xl bg-slate-950/60 border border-slate-800">
         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4 flex items-center justify-between">
           <span>Pillar Comparison: Baseline vs Estimated</span>
-          <span className="text-[11px] font-mono text-slate-500 font-normal">Max 25 pts each</span>
+          <span className="text-[11px] font-mono text-slate-400 font-normal">Max 25 pts each</span>
         </h4>
         <div className="space-y-4">
           {Object.values(simulation.pillars).map((pillar) => {
@@ -215,7 +215,7 @@ export const PortfolioSimulatorSection: React.FC<PortfolioSimulatorSectionProps>
                         +{pillar.delta} → {pillar.simulated}
                       </span>
                     )}
-                    <span className="text-slate-600">/ {pillar.max}</span>
+                    <span className="text-slate-400">/ {pillar.max}</span>
                   </div>
                 </div>
 
@@ -293,7 +293,7 @@ export const PortfolioSimulatorSection: React.FC<PortfolioSimulatorSectionProps>
                     </div>
 
                     <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold shrink-0 ${
+                      className={`px-2 py-0.5 rounded text-[11px] font-mono font-semibold shrink-0 ${
                         action.alreadySatisfied
                           ? 'bg-slate-800 text-slate-400'
                           : 'bg-emerald-950/80 border border-emerald-600/50 text-emerald-300'
@@ -310,7 +310,7 @@ export const PortfolioSimulatorSection: React.FC<PortfolioSimulatorSectionProps>
 
                 {/* Practical Action Steps */}
                 <div className="pt-2 border-t border-slate-800/80 text-[11px] space-y-1">
-                  <div className="flex items-center justify-between text-slate-500 font-mono text-[10px]">
+                  <div className="flex items-center justify-between text-slate-400 font-mono text-[11px]">
                     <span>Current: {action.currentStatus}</span>
                     <span>Target: {action.targetStatus}</span>
                   </div>
@@ -335,8 +335,8 @@ export const PortfolioSimulatorSection: React.FC<PortfolioSimulatorSectionProps>
             <li key={idx}>{item}</li>
           ))}
         </ul>
-        <div className="pt-2 text-[10px] text-slate-500 flex items-center gap-1">
-          <Info className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+        <div className="pt-2 text-[11px] text-slate-400 flex items-center gap-1">
+          <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span>
             Repozyn AI never fabricates metrics. Estimated scores are calculated using the active 4-pillar rubric.
           </span>

@@ -41,22 +41,78 @@ export const RoastSection: React.FC<RoastSectionProps> = ({ roasts, isMockData =
     }
   };
 
-  return (
-    <div className="rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl p-6 sm:p-8 backdrop-blur-xl relative">
-      {/* Header and Tone Selector */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+  const renderRoast = (roast: RoastItem) => {
+    const isCopied = copiedId === roast.id;
+    const badgeColor =
+      roast.severity === 'spicy'
+        ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+        : roast.severity === 'medium'
+        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+
+    return (
+      <div
+        key={roast.id}
+        className="rounded-2xl bg-slate-950/80 border border-slate-800 p-4 flex flex-col justify-between hover:border-slate-700 transition group relative"
+      >
         <div>
-          <div className="flex items-center gap-2">
+          {/* Card top */}
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider border ${badgeColor}`}>
+                {roast.severity}
+              </span>
+              <h4 className="font-bold text-sm sm:text-base text-white group-hover:text-rose-300 transition-colors">
+                {roast.title}
+              </h4>
+            </div>
+
+            <button
+              onClick={() => handleCopyRoast(roast)}
+              className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition shrink-0"
+              title="Copy roast text"
+              aria-label="Copy this observation"
+            >
+              {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+
+          {/* Roast body */}
+          <p className="text-sm sm:text-base text-slate-200 leading-relaxed my-3 font-normal">
+            "{roast.roast}"
+          </p>
+        </div>
+
+        {/* Evidence Callout */}
+        <div className="mt-3 pt-3 border-t border-slate-900/80">
+          <div className="flex items-start gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 text-[11px] text-slate-400">
+            <Tag className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold text-slate-300">{isMockData ? 'Sample Evidence: ' : 'Verified Evidence: '}</span>
+              <span>{roast.evidence}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="premium-panel roast-panel h-full rounded-3xl bg-slate-900/70 border border-slate-700/70 p-5 sm:p-6 relative">
+      {/* Header and Tone Selector */}
+      <div className="flex flex-col items-start gap-3 mb-3">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-950/50 border border-rose-700/50 text-rose-300">
               <Flame className="w-3.5 h-3.5 text-rose-400" />
-              EVIDENCE-BASED ROAST STATION
+              01 / ROAST
             </span>
-            <h3 className="text-xl sm:text-2xl font-extrabold text-white">The Honest Roast</h3>
+            <h3 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">The Honest Roast</h3>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             {isMockData
-              ? 'Humorous observations grounded in this demo persona\u2019s sample data.'
-              : 'Humorous, data-backed observations grounded in verified repository facts.'}
+              ? 'Observations grounded in this demo persona’s sample data.'
+              : 'Public profile facts, with a little heat.'}
           </p>
         </div>
 
@@ -106,73 +162,33 @@ export const RoastSection: React.FC<RoastSectionProps> = ({ roasts, isMockData =
       </div>
 
       {/* Roasts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-3">
         {filteredRoasts.length === 0 ? (
-          <div className="col-span-2 p-8 text-center rounded-2xl bg-slate-950/60 border border-slate-800 text-slate-400 text-sm">
-            No roasts found at this spice level. Try switching to Medium or Savage!
+          <div className="p-5 text-center rounded-2xl bg-slate-950/60 border border-slate-800 text-slate-400 text-sm">
+            {roasts.length === 0 ? 'No roast observations for this profile. Explore the evidence and improvement simulator below.' : 'No roasts found at this spice level. Try switching to Medium or Savage!'}
           </div>
         ) : (
-          filteredRoasts.map((roast) => {
-            const isCopied = copiedId === roast.id;
-            const badgeColor =
-              roast.severity === 'spicy'
-                ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                : roast.severity === 'medium'
-                ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
-
-            return (
-              <div
-                key={roast.id}
-                className="rounded-2xl bg-slate-950/80 border border-slate-800 p-5 flex flex-col justify-between hover:border-slate-700 transition group relative"
-              >
-                <div>
-                  {/* Card top */}
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${badgeColor}`}>
-                        {roast.severity}
-                      </span>
-                      <h4 className="font-bold text-sm sm:text-base text-white group-hover:text-rose-300 transition-colors">
-                        {roast.title}
-                      </h4>
-                    </div>
-
-                    <button
-                      onClick={() => handleCopyRoast(roast)}
-                      className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition shrink-0"
-                      title="Copy roast text"
-                    >
-                      {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-
-                  {/* Roast body */}
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed my-3 font-normal">
-                    "{roast.roast}"
-                  </p>
-                </div>
-
-                {/* Evidence Callout */}
-                <div className="mt-3 pt-3 border-t border-slate-900/80">
-                  <div className="flex items-start gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 text-[11px] text-slate-400">
-                    <Tag className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold text-slate-300">{isMockData ? 'Sample Evidence: ' : 'Verified Evidence: '}</span>
-                      <span>{roast.evidence}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })
+          <>
+            {renderRoast(filteredRoasts[0])}
+            {filteredRoasts.length > 1 && (
+              <details className="analysis-disclosure border-t border-slate-700/70 pt-2">
+                <summary className="cursor-pointer py-2 text-xs font-semibold text-rose-300">Read {filteredRoasts.length - 1} more {filteredRoasts.length === 2 ? 'observation' : 'observations'}</summary>
+                <div className="space-y-3 pt-3">{filteredRoasts.slice(1).map(renderRoast)}</div>
+              </details>
+            )}
+          </>
         )}
       </div>
 
       {/* Footer note */}
-      <div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-slate-500 text-center">
+      <div className="mt-4 flex items-start gap-2 text-xs text-slate-400">
         <Sparkles className="w-3.5 h-3.5 text-rose-400" />
-        <span>We roast with love so you can rescue your portfolio with confidence. Scroll down for your custom roadmap!</span>
+        <span>
+          Turn the feedback into your next move.{' '}
+          <a href="#rescue" className="text-emerald-300 underline underline-offset-2 hover:text-emerald-200">
+            Go to your rescue plan
+          </a>
+        </span>
       </div>
     </div>
   );

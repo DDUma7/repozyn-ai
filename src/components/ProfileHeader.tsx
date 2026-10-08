@@ -40,12 +40,12 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   return (
-    <div className="rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden">
+    <div className="premium-panel profile-panel rounded-3xl bg-slate-900/70 border border-slate-700/70 p-5 sm:p-6 relative overflow-hidden">
       {/* Background ambient lighting */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-indigo-500/10 via-rose-500/10 to-transparent blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-indigo-500/10 via-rose-500/10 to-transparent blur-3xl pointer-events-none" />
 
       {/* Verified Data Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-6 mb-6 border-b border-slate-800/80">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-800/80">
         <div className="flex items-center gap-2">
           {isMockData ? (
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-950/40 border border-amber-700/50 text-amber-300">
@@ -86,14 +86,14 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
         {/* Profile Info */}
-        <div className="lg:col-span-8 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+        <div className="lg:col-span-8 flex flex-row items-start sm:items-center gap-4">
           <div className="relative shrink-0">
             <img
               src={facts.avatarUrl}
               alt={facts.username}
-              className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover ring-2 ring-indigo-500/30 shadow-xl"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-2 ring-indigo-500/30 shadow-xl"
             />
             <a
               href={facts.profileUrl}
@@ -101,48 +101,51 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               rel="noopener noreferrer"
               className="absolute -bottom-2 -right-2 p-1.5 rounded-lg bg-slate-950 border border-slate-700 text-slate-400 hover:text-white transition shadow-lg"
               title="Open GitHub Profile"
+              aria-label={`Open ${facts.username} on GitHub (opens in a new tab)`}
             >
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
 
-          <div className="space-y-3 flex-1 min-w-0">
+          <div className="space-y-2 flex-1 min-w-0">
             <div>
               <div className="flex flex-wrap items-center gap-3">
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight truncate">
+                <h2 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight break-words">
                   {facts.name || facts.username}
                 </h2>
                 <a
                   href={facts.profileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-mono text-indigo-400 hover:text-indigo-300"
+                  className="text-xs sm:text-sm font-mono text-indigo-300 hover:text-indigo-200 break-all"
                 >
                   @{facts.username}
                 </a>
               </div>
               <p className="text-sm text-slate-300 mt-1 max-w-xl line-clamp-2 leading-relaxed">
-                {facts.bio || <span className="italic text-slate-500">No profile bio provided</span>}
+                {facts.bio || <span className="italic text-slate-400">No profile bio provided</span>}
               </p>
             </div>
 
+            <details className="analysis-disclosure text-xs">
+              <summary className="cursor-pointer py-1 text-slate-300">Profile details</summary>
             {/* Badges / Metadata */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-400 font-medium">
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-400 font-medium">
               {facts.company && (
                 <div className="flex items-center gap-1">
-                  <Building className="w-3.5 h-3.5 text-slate-500" />
+                  <Building className="w-3.5 h-3.5 text-slate-400" />
                   <span>{facts.company}</span>
                 </div>
               )}
               {facts.location && (
                 <div className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
                   <span>{facts.location}</span>
                 </div>
               )}
               {facts.website && (
                 <div className="flex items-center gap-1">
-                  <LinkIcon className="w-3.5 h-3.5 text-slate-500" />
+                  <LinkIcon className="w-3.5 h-3.5 text-slate-400" />
                   <a
                     href={facts.website.startsWith('http') ? facts.website : `https://${facts.website}`}
                     target="_blank"
@@ -154,22 +157,23 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </div>
               )}
               <div className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                <Calendar className="w-3.5 h-3.5 text-slate-400" />
                 <span>Joined {facts.createdAtFormatted} ({facts.accountAgeYears}y)</span>
               </div>
               <div className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-slate-500" />
+                <Users className="w-3.5 h-3.5 text-slate-400" />
                 <span>
                   <strong>{facts.followersCount}</strong> followers • <strong>{facts.followingCount}</strong> following
                 </span>
               </div>
             </div>
+            </details>
           </div>
         </div>
 
         {/* Health Score Summary Card */}
-        <div className="lg:col-span-4 rounded-2xl bg-slate-950/80 border border-slate-800 p-6 flex flex-col justify-between relative shadow-inner">
-          <div className="flex items-center justify-between mb-4">
+        <div className="lg:col-span-4 rounded-2xl bg-slate-950/80 border border-slate-800 p-4 flex flex-col justify-between relative shadow-inner">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Portfolio Health Score
             </span>
@@ -184,24 +188,33 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <span className="text-4xl sm:text-5xl font-black text-white font-mono tracking-tight">
                   {scoring.totalScore}
                 </span>
-                <span className="text-sm text-slate-500 font-mono">/ 100</span>
+                <span className="text-sm text-slate-400 font-mono">/ 100</span>
               </div>
               <p className="text-xs text-slate-400 mt-1 line-clamp-2">
                 {scoring.summary}
               </p>
             </div>
 
-            {/* Big Grade Badge */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 shadow-lg">
-              <span className={`text-3xl sm:text-4xl font-black font-mono ${scoring.gradeColor}`}>
-                {scoring.grade}
-              </span>
+            {/* Score arc complements the numeric value and the accessible progress bar. */}
+            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center">
+              <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
+                <circle cx="40" cy="40" r="34" fill="none" stroke="currentColor" strokeWidth="4" className="text-slate-800" />
+                <circle cx="40" cy="40" r="34" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" pathLength="100" strokeDasharray={`${scoring.totalScore} 100`} className="score-arc text-indigo-300" />
+              </svg>
+              <span className={`text-3xl font-semibold font-mono ${scoring.gradeColor}`}>{scoring.grade}</span>
             </div>
           </div>
 
           {/* Mini progress bar */}
-          <div className="mt-4 pt-4 border-t border-slate-800/80">
-            <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+          <div className="mt-3 pt-3 border-t border-slate-800/80">
+            <div
+              role="progressbar"
+              aria-label="Portfolio health score"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={scoring.totalScore}
+              className="w-full h-2 rounded-full bg-slate-800 overflow-hidden"
+            >
               <div
                 className="h-full bg-gradient-to-r from-rose-500 via-amber-400 to-emerald-400 rounded-full transition-all duration-1000"
                 style={{ width: `${scoring.totalScore}%` }}

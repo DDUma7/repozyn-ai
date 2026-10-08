@@ -11,6 +11,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import type { RoadmapActionItem } from '../types/analysis';
+import { selectTopRescuePriorities } from '../services/analyzer';
 import confetti from 'canvas-confetti';
 
 interface RescueRoadmapSectionProps {
@@ -43,6 +44,7 @@ export const RescueRoadmapSection: React.FC<RescueRoadmapSectionProps> = ({ road
           try {
             confetti({
               particleCount: 100,
+              disableForReducedMotion: true,
               spread: 70,
               origin: { y: 0.6 },
             });
@@ -65,19 +67,19 @@ export const RescueRoadmapSection: React.FC<RescueRoadmapSectionProps> = ({ road
   const progressPercent = roadmap.length > 0 ? Math.round((completedCount / roadmap.length) * 100) : 0;
 
   return (
-    <div className="rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl p-6 sm:p-8 backdrop-blur-xl relative">
+    <div className="premium-panel rescue-panel rounded-3xl bg-slate-900/70 border border-slate-700/70 p-5 sm:p-6 relative">
       {/* Header and Progress */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-950/40 border border-emerald-700/50 text-emerald-300">
               <LifeBuoy className="w-3.5 h-3.5 text-emerald-400" />
-              ACTIONABLE RESCUE PLAN
+              02 / THE RESCUE
             </span>
-            <h3 className="text-xl sm:text-2xl font-extrabold text-white">Your Rescue Roadmap</h3>
+            <h3 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">Your Rescue Roadmap</h3>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Personalized, prioritized checklist to elevate your portfolio into recruiter-ready status.
+            A few focused changes beat a complete rewrite. Start with the priorities below.
           </p>
         </div>
 
@@ -89,7 +91,14 @@ export const RescueRoadmapSection: React.FC<RescueRoadmapSectionProps> = ({ road
               {completedCount} / {roadmap.length} ({progressPercent}%)
             </span>
           </div>
-          <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+          <div
+            role="progressbar"
+            aria-label="Rescue roadmap progress"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progressPercent}
+            className="w-full h-2 rounded-full bg-slate-800 overflow-hidden"
+          >
             <div
               className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
@@ -97,6 +106,44 @@ export const RescueRoadmapSection: React.FC<RescueRoadmapSectionProps> = ({ road
           </div>
         </div>
       </div>
+
+      {/* Start here: the three things worth doing first, each tied to what was observed */}
+      {roadmap.length > 0 && (
+        <div role="group" aria-label="Top rescue priorities" className="mb-6">
+          <h4 className="text-sm font-bold text-white mb-1">Start here: your top {Math.min(3, roadmap.length)} rescue {roadmap.length === 1 ? 'priority' : 'priorities'}</h4>
+          <p className="text-xs text-slate-400 mb-3">Chosen by urgency, then impact. The evidence tells you why; the first step tells you how.</p>
+          <ol className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {selectTopRescuePriorities(roadmap, 3).map((item, index) => (
+              <li key={item.id} className="rescue-priority p-4 rounded-2xl bg-emerald-500/5 border border-emerald-400/25 flex flex-col gap-3">
+                <div className="flex items-start gap-2">
+                  <span className="shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center justify-center">
+                    {index + 1}
+                  </span>
+                  <span className="text-sm font-bold text-white">{item.title}</span>
+                </div>
+                {item.evidence && (
+                  <p className="text-xs text-slate-300">
+                    <strong className="text-slate-200">Because:</strong> {item.evidence}
+                  </p>
+                )}
+                <p className="text-sm leading-relaxed text-slate-200">
+                  <strong className="text-emerald-300">First step:</strong> {item.actionStep}
+                </p>
+                <span className="mt-auto inline-flex items-center gap-1 text-[11px] text-slate-400">
+                  <Clock className="w-3 h-3" aria-hidden="true" />
+                  {item.effort}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {roadmap.length === 0 && (
+        <p className="rounded-2xl border border-emerald-400/25 bg-emerald-500/5 p-4 text-sm text-slate-300">
+          No rescue actions were suggested by the current rubric. Explore the repository evidence for a closer look.
+        </p>
+      )}
 
       {/* Checklist Grid */}
       <div className="space-y-4">
@@ -143,7 +190,7 @@ export const RescueRoadmapSection: React.FC<RescueRoadmapSectionProps> = ({ road
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                    <span className="font-mono text-xs text-slate-500">#{index + 1}</span>
+                    <span className="font-mono text-xs text-slate-400">#{index + 1}</span>
                     <h4
                       className={`font-bold text-sm sm:text-base ${
                         isDone ? 'line-through text-slate-400' : 'text-white'
@@ -154,12 +201,12 @@ export const RescueRoadmapSection: React.FC<RescueRoadmapSectionProps> = ({ road
 
                     {/* Badges */}
                     <span
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${priorityColor}`}
+                      className={`px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider border ${priorityColor}`}
                     >
                       {item.priority}
                     </span>
                     <span className="flex items-center gap-1 text-[11px] text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded-md">
-                      <Clock className="w-3 h-3 text-slate-500" />
+                      <Clock className="w-3 h-3 text-slate-400" />
                       {item.effort}
                     </span>
                   </div>
@@ -167,6 +214,11 @@ export const RescueRoadmapSection: React.FC<RescueRoadmapSectionProps> = ({ road
                   <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mb-3">
                     {item.description}
                   </p>
+                  {item.evidence && (
+                    <p className="text-xs text-slate-400 mb-3">
+                      <strong className="text-slate-300">Evidence:</strong> {item.evidence}
+                    </p>
+                  )}
 
                   {/* Action step card */}
                   <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800/80 text-xs text-slate-300 flex items-start gap-2">
@@ -178,6 +230,8 @@ export const RescueRoadmapSection: React.FC<RescueRoadmapSectionProps> = ({ road
                   {hasSnippet && item.templateSnippet && (
                     <div className="mt-3">
                       <button
+                        type="button"
+                        aria-expanded={isSnippetExpanded}
                         onClick={() =>
                           setExpandedSnippetId(isSnippetExpanded ? null : item.id)
                         }

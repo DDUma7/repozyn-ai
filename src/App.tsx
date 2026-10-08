@@ -8,6 +8,7 @@ import { RoastSection } from './components/RoastSection';
 import { RescueRoadmapSection } from './components/RescueRoadmapSection';
 import { PortfolioSimulatorSection } from './components/PortfolioSimulatorSection';
 import { RepositoryExplorer } from './components/RepositoryExplorer';
+import { EvidenceIntelligenceSection } from './components/EvidenceIntelligenceSection';
 import { TokenModal } from './components/TokenModal';
 import { MarkdownReportModal } from './components/MarkdownReportModal';
 import { ProfileMakeoverModal } from './components/ProfileMakeoverModal';
@@ -15,9 +16,12 @@ import {
   fetchGitHubUser,
   fetchGitHubRepos,
   checkRateLimit,
+  getLastObservedRateLimit,
+  setGitHubAuthContext,
   GitHubApiError,
 } from './services/github';
 import { analyzePortfolio } from './services/analyzer';
+import { mergeQuotaObservation } from './utils/quota';
 import type { PortfolioReport } from './types/analysis';
 import type { RateLimitInfo } from './types/github';
 import { MOCK_PROFILES, type MockProfile } from './data/mockProfiles';
@@ -48,10 +52,22 @@ function findSharedMock(): MockProfile | undefined {
   }
 }
 
+// Scrolls to the top, without animation for people who asked their system to reduce motion
+function scrollToTop() {
+  if (typeof window.scrollTo !== 'function') return;
+  const reduceMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+}
+
 export function App() {
   const [token, setToken] = useState<string>(() => {
-    return sessionStorage.getItem('repozyn_token') || '';
+    const saved = sessionStorage.getItem('repozyn_token') || '';
+    // Tell the API client which credentials are in force before anything is fetched
+    setGitHubAuthContext(saved);
+    return saved;
   });
+  // Changes whenever the credentials change, so credential-dependent views start from scratch
+  const [credentialVersion, setCredentialVersion] = useState(0);
   const [rateLimit, setRateLimit] = useState<RateLimitInfo | null>(null);
   const [report, setReport] = useState<PortfolioReport | null>(() => {
     const sharedMock = findSharedMock();
@@ -72,19 +88,32 @@ export function App() {
 
   // Initial rate limit check
   useEffect(() => {
-    checkRateLimit(token).then((info) => setRateLimit(info));
+    // A quota answer for credentials that are no longer in force must not be shown
+    let superseded = false;
+    checkRateLimit(token).then((info) => {
+      if (!superseded) setRateLimit((current) => mergeQuotaObservation(current, info));
+    });
+    return () => {
+      superseded = true;
+    };
   }, [token]);
 
-  const handleSaveToken = (newToken: string) => {
-    setToken(newToken);
-    sessionStorage.setItem('repozyn_token', newToken);
+  // Single place where the credentials change. Order matters: the API client drops its caches
+  // and aborts pending requests first, then every pending UI update is marked stale.
+  const applyToken = (nextToken: string) => {
+    if (nextToken === token) return;
+    setGitHubAuthContext(nextToken);
+    latestRequestRef.current += 1;
+    setIsLoading(false);
+    setCredentialVersion((version) => version + 1);
+    setToken(nextToken);
+    if (nextToken) sessionStorage.setItem('repozyn_token', nextToken);
+    else sessionStorage.removeItem('repozyn_token');
   };
 
-  const handleClearToken = () => {
-    setToken('');
-    sessionStorage.removeItem('repozyn_token');
-    checkRateLimit().then((info) => setRateLimit(info));
-  };
+  const handleSaveToken = (newToken: string) => applyToken(newToken.trim());
+
+  const handleClearToken = () => applyToken('');
 
   const handleSearch = async (username: string) => {
     if (!username.trim() || isLoading) return;
@@ -97,12 +126,12 @@ export function App() {
       // 1. Fetch user profile (proxy -> direct fallback, cached)
       const userRes = await fetchGitHubUser(username, token);
       if (isStale()) return;
-      setRateLimit(userRes.rateLimit);
+      setRateLimit((current) => mergeQuotaObservation(current, userRes.rateLimit));
 
       // 2. Fetch public repos (proxy -> direct fallback, cached)
       const reposRes = await fetchGitHubRepos(username, token);
       if (isStale()) return;
-      setRateLimit(reposRes.rateLimit);
+      setRateLimit((current) => mergeQuotaObservation(current, reposRes.rateLimit));
 
       // 3. Run deterministic portfolio analyzer with zero redundant API calls
       const analysis = analyzePortfolio(userRes.data, reposRes.data, [], false);
@@ -111,12 +140,12 @@ export function App() {
       syncShareUrl('user', userRes.data.login);
 
       // Smooth scroll to top of report
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollToTop();
     } catch (err: any) {
       if (isStale()) return;
       if (err instanceof GitHubApiError) {
         setError(err.message);
-        if (err.rateLimit) setRateLimit(err.rateLimit);
+        if (err.rateLimit) setRateLimit((current) => mergeQuotaObservation(current, err.rateLimit!));
       } else {
         setError(err.message || 'An unexpected error occurred while analyzing this profile.');
       }
@@ -134,7 +163,7 @@ export function App() {
     syncShareUrl('demo', mock.id);
     setIsLoading(false);
     if (typeof window.scrollTo === 'function') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollToTop();
     }
   };
 
@@ -144,7 +173,7 @@ export function App() {
     setReport(null);
     setError(null);
     syncShareUrl(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTop();
   };
 
   // Restore a shared real-profile link (?user=<login>) once on load; demo links are restored in initial state
@@ -167,7 +196,10 @@ export function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-rose-500/30 selection:text-white">
+    <div className="app-shell min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-rose-500/30 selection:text-white">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       {/* Top Navbar */}
       <Navbar
         rateLimit={rateLimit}
@@ -178,7 +210,12 @@ export function App() {
       />
 
       {/* Main Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Announces audit progress to screen-reader users */}
+      <div role="status" aria-live="polite" className="sr-only" data-testid="audit-status">
+        {isLoading ? 'Auditing GitHub profile…' : report ? `Audit ready for ${report.facts.username}.` : ''}
+      </div>
+
+      <main id="main-content" tabIndex={-1} className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 focus:outline-none">
         {!report ? (
           /* Landing Search Hero */
           <SearchHero
@@ -192,14 +229,26 @@ export function App() {
           />
         ) : (
           /* Active Portfolio Dashboard */
-          <div className="space-y-8 animate-fadeIn">
+          <div className="audit-dashboard space-y-5 animate-fadeIn">
+            <h1 className="sr-only">Portfolio audit for {report.facts.username}</h1>
             {/* Quick Re-Search Bar on top of dashboard */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-md">
-              <div className="flex items-center gap-2 text-xs text-slate-400">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 min-w-0">
                 <span className="font-semibold text-slate-300">Auditing:</span>
                 <span className="font-mono text-indigo-400 font-bold">@{report.facts.username}</span>
                 <span>•</span>
                 <span>{report.facts.analyzedReposCount} repos analyzed</span>
+                <span className="inline-flex items-center gap-2 rounded-lg border border-indigo-400/25 bg-indigo-500/10 px-2.5 py-1.5 text-indigo-200">
+                  <span>Portfolio score</span>
+                  <strong className="font-mono text-white">{report.scoring.totalScore}/100</strong>
+                  <span className="border-l border-indigo-400/30 pl-2 font-semibold">{report.scoring.grade}</span>
+                </span>
+                {report.facts.analyzedReposCount >= 100 && report.facts.totalPublicRepos > report.facts.analyzedReposCount && (
+                  <span role="note" className="px-2 py-0.5 rounded-md bg-amber-950/40 border border-amber-600/50 text-amber-200">
+                    Sample: the {report.facts.analyzedReposCount} most recently updated of {report.facts.totalPublicRepos} public repositories.
+                    Scores and findings describe this sample only.
+                  </span>
+                )}
               </div>
 
               <form
@@ -207,10 +256,10 @@ export function App() {
                   e.preventDefault();
                   if (compactSearch.trim()) handleSearch(compactSearch.trim());
                 }}
-                className="flex items-center gap-2 w-full sm:w-auto"
+                className="flex shrink-0 items-center gap-2 w-full sm:w-auto"
               >
-                <div className="relative flex-1 sm:w-64">
-                  <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <div className="relative min-w-0 flex-1 sm:w-56">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={compactSearch}
@@ -218,6 +267,7 @@ export function App() {
                       setCompactSearch(e.target.value);
                       if (error) setError(null);
                     }}
+                    aria-label="GitHub username to audit next"
                     placeholder="Audit another username..."
                     disabled={isLoading}
                     className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
@@ -228,7 +278,7 @@ export function App() {
                   disabled={isLoading || !compactSearch.trim()}
                   className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition disabled:opacity-40"
                 >
-                  {isLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : 'Audit'}
+                  {isLoading ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /><span className="sr-only">Auditing…</span></> : 'Audit'}
                 </button>
               </form>
             </div>
@@ -259,6 +309,46 @@ export function App() {
               </div>
             )}
 
+            {/* Keyboard-friendly shortcuts through the core journey */}
+            <nav aria-label="Audit sections" className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-slate-400">Jump to:</span>
+              {[
+                ['#recruiter-impression', 'Recruiter impression'],
+                ['#roast', 'Roast'],
+                ['#rescue', 'Rescue plan'],
+                ['#evidence', 'Repository evidence'],
+                ['#simulator', 'Improvement simulator'],
+              ].map(([href, label]) => (
+                <a
+                  key={href}
+                  href={href}
+                  className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-600 underline-offset-2 hover:underline"
+                >
+                  {label}
+                </a>
+              ))}
+            </nav>
+
+            <h2 className="sr-only">First impression and next steps</h2>
+
+            <div className="grid items-start gap-5 lg:grid-cols-2">
+              {/* 2. What a recruiter notices in 30 seconds */}
+              <div id="recruiter-impression" tabIndex={-1} className="scroll-mt-20 focus:outline-none">
+                <RecruiterImpressionCard recruiter={report.recruiter} facts={report.facts} isMockData={report.isMockData} />
+              </div>
+
+              {/* 3. The roast: funny, evidence-backed, never cruel */}
+              <div id="roast" tabIndex={-1} className="scroll-mt-20 focus:outline-none">
+                <RoastSection roasts={report.roasts} isMockData={report.isMockData} />
+              </div>
+
+            </div>
+
+            {/* 4. The rescue: top three priorities first, then the full checklist */}
+            <div id="rescue" tabIndex={-1} className="scroll-mt-20 focus:outline-none">
+              <RescueRoadmapSection roadmap={report.roadmap} />
+            </div>
+
             {/* 1. Profile Overview & Score Grade */}
             <ProfileHeader
               report={report}
@@ -266,29 +356,39 @@ export function App() {
               onOpenMakeoverModal={() => setIsMakeoverModalOpen(true)}
             />
 
-            {/* 2. Recruiter Quick-Scan Impression Card */}
-            <RecruiterImpressionCard recruiter={report.recruiter} />
-
-            {/* 3. Transparent 4-Pillar Health Score Breakdown */}
+            {/* 5. Why the score is what it is */}
             <HealthScoreSection scoring={report.scoring} />
 
-            {/* 4. Humorous Evidence-Based Roast Station */}
-            <RoastSection roasts={report.roasts} isMockData={report.isMockData} />
+            {/* 6. Optional depth: user-triggered repository evidence, separate from the health score */}
+            <div id="evidence" tabIndex={-1} className="scroll-mt-20 focus:outline-none">
+              <EvidenceIntelligenceSection
+                key={`${report.facts.username}:${report.analyzedAt}:${credentialVersion}`}
+                username={report.facts.username}
+                repos={report.facts.allRepos}
+                isMockData={report.isMockData}
+                token={token}
+                rateLimit={rateLimit}
+                onInspectionComplete={() => {
+                  // Show the counters from the inspection's own requests, which are the accurate ones
+                  const observed = getLastObservedRateLimit();
+                  if (observed) setRateLimit((current) => mergeQuotaObservation(current, observed));
+                }}
+              />
+            </div>
 
-            {/* 5. Before & After Portfolio Rescue Simulator */}
-            <PortfolioSimulatorSection facts={report.facts} isMockData={report.isMockData} />
+            {/* 7. Improvement simulation: what the score becomes if the fixes are made */}
+            <div id="simulator" tabIndex={-1} className="scroll-mt-20 focus:outline-none">
+              <PortfolioSimulatorSection facts={report.facts} isMockData={report.isMockData} />
+            </div>
 
-            {/* 6. Personalized Rescue Roadmap */}
-            <RescueRoadmapSection roadmap={report.roadmap} />
-
-            {/* 6. Repository Explorer Deep Dive */}
+            {/* 8. Repository Explorer Deep Dive */}
             <RepositoryExplorer repos={report.facts.allRepos} />
           </div>
         )}
       </main>
 
       {/* Footer */}
-      <footer className="mt-16 border-t border-slate-800/80 bg-slate-950 py-8 text-center text-xs text-slate-500">
+      <footer className="mt-10 border-t border-slate-800/80 bg-slate-950 py-8 text-center text-xs text-slate-400">
         <div className="max-w-7xl mx-auto px-4 space-y-2">
           <div className="flex items-center justify-center gap-2 font-medium text-slate-400">
             <Flame className="w-4 h-4 text-rose-500" />
@@ -297,7 +397,7 @@ export function App() {
           <p>
             Deterministic scoring rubric • No fabricated AI claims • Public GitHub REST data fetched through a lightweight server proxy.
           </p>
-          <div className="pt-2 text-[11px] text-slate-600">
+          <div className="pt-2 text-[11px] text-slate-400">
             Powered by React, TypeScript, Vite & Tailwind CSS.
           </div>
         </div>

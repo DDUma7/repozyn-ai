@@ -22,6 +22,14 @@ export function useDialogAccessibility({
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
 
+  // Parents usually pass a new onClose function on every render. Keeping the latest one in a ref
+  // means a background re-render (for example a quota update) does not tear the effect down,
+  // which would otherwise throw focus back to the trigger and then to the first field.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -49,7 +57,7 @@ export function useDialogAccessibility({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -92,7 +100,9 @@ export function useDialogAccessibility({
         triggerRef.current.focus();
       }
     };
-  }, [isOpen, onClose, initialFocusRef]);
+    // Focus is placed once per opening, and restored once on closing
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   return { containerRef };
 }

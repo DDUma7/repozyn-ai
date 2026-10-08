@@ -3,6 +3,7 @@ import type React from 'react';
 import { Flame, Key, RefreshCw, ExternalLink, Sparkles } from 'lucide-react';
 import type { RateLimitInfo } from '../types/github';
 import { MOCK_PROFILES, type MockProfile } from '../data/mockProfiles';
+import { quotaIsFresh, quotaLabel, quotaMessage } from '../utils/quota';
 
 interface NavbarProps {
   rateLimit: RateLimitInfo | null;
@@ -19,7 +20,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   hasToken,
   onReset,
 }) => {
-  const resetMinutes = rateLimit?.resetMinutes ?? 60;
   const [isPersonaMenuOpen, setIsPersonaMenuOpen] = useState(false);
   const personaMenuRef = useRef<HTMLDivElement>(null);
   const personaToggleRef = useRef<HTMLButtonElement>(null);
@@ -51,12 +51,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [isPersonaMenuOpen]);
   return (
     <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-3 flex items-center justify-between gap-2">
         {/* Brand */}
         <button
           onClick={onReset}
           aria-label="Repozyn AI Home - Reset Search"
-          className="flex items-center gap-3 group text-left transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-xl"
+          className="flex shrink-0 items-center gap-2 group text-left transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-xl"
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 p-[1.5px] shadow-lg shadow-rose-500/20">
             <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
@@ -68,7 +68,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="font-bold text-base sm:text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent whitespace-nowrap">
                 Repozyn AI
               </span>
-              <span className="hidden sm:inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 whitespace-nowrap">
+              <span className="hidden sm:inline-block text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 whitespace-nowrap">
                 Roast & Rescue
               </span>
             </div>
@@ -77,7 +77,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
         {/* Right Actions */}
-        <nav aria-label="Quick actions" className="flex items-center gap-2 sm:gap-4">
+        <nav aria-label="Quick actions" className="flex items-center gap-1 sm:gap-3">
           {/* Mock Personas Dropdown */}
           <div className="relative" ref={personaMenuRef}>
             <button
@@ -87,7 +87,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               aria-expanded={isPersonaMenuOpen}
               aria-controls="demo-persona-menu"
               aria-label="Select demo persona"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+              className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-medium rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
               <span className="hidden sm:inline">Demo Personas</span>
@@ -129,11 +129,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-rose-950/40 border-rose-800/60 text-rose-300'
                   : 'bg-slate-900/80 border-slate-800 text-slate-300'
               }`}
-              title={`API Limit: ${rateLimit.remaining}/${rateLimit.limit} requests left. Resets in ${resetMinutes} min`}
+              title={quotaMessage(rateLimit)}
             >
-              <RefreshCw className="w-3.5 h-3.5 text-slate-400 animate-spin-slow" aria-hidden="true" />
+              <RefreshCw className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
               <span>
-                API: <strong className="text-white">{rateLimit.remaining}</strong>/{rateLimit.limit}
+                {rateLimit.source?.startsWith('proxy-') ? 'App budget' : 'GitHub'}: <strong className="text-white">{rateLimit.limitKind === 'secondary' ? 'paused' : quotaIsFresh(rateLimit) ? `${rateLimit.remaining}/${rateLimit.limit}` : 'unknown'}</strong><span className="sr-only"> · {quotaLabel(rateLimit)}</span>
               </span>
             </div>
           )}
@@ -142,7 +142,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenTokenModal}
             aria-label="Open GitHub personal access token settings"
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+            className={`flex items-center gap-1.5 px-2.5 py-2 text-xs font-medium rounded-lg border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
               hasToken
                 ? 'bg-emerald-950/30 border-emerald-700/50 text-emerald-300'
                 : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'

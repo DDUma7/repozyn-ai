@@ -291,7 +291,7 @@ export function simulatePortfolioImprovements(
 
   // Build transparent assumptions and limits
   const assumptionsAndLimits: string[] = [
-    `Original Project Ratio (${Math.round((baselineFacts.originalReposCount / totalRepos) * 100)}%) and Community Stars (${baselineFacts.totalStarsEarned} ⭐) represent organic peer validation and cannot be simulated by hygiene toggles.`,
+    `Non-fork repository ratio (${Math.round((baselineFacts.originalReposCount / totalRepos) * 100)}%) and Community Stars (${baselineFacts.totalStarsEarned} ⭐) represent organic peer validation and cannot be simulated by hygiene toggles.`,
     'All simulated points are derived strictly from the Repozyn 4-pillar deterministic rubric (max 25 pts per pillar).',
     'Hypothetical projections require real code, configuration, or settings updates to be pushed to GitHub to take effect in actual audits.',
   ];
@@ -323,7 +323,7 @@ export function simulatePortfolioImprovements(
         max: 25,
       },
       originality: {
-        name: 'Originality & Independence',
+        name: 'Own Work & Traction',
         baseline: baselineScoring.originality.score,
         simulated: simulatedScoring.originality.score,
         delta: simulatedScoring.originality.score - baselineScoring.originality.score,

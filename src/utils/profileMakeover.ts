@@ -228,8 +228,8 @@ ${safeDesc}
     projectsSection = `## 🌟 Featured Projects\n\n<!-- 💡 Suggestion: Publish 2-3 original open-source projects or portfolio highlights to pin here -->\n`;
     missingSuggestions.push({
       field: 'projects',
-      label: 'Zero Original Projects',
-      suggestion: 'Create and pin original repositories with clean READMEs to demonstrate engineering depth.',
+      label: 'No Non-Fork Projects',
+      suggestion: 'Create and pin repositories you started yourself, each with a README that explains it.',
       severity: 'recommended',
     });
   }
@@ -261,7 +261,7 @@ ${safeDesc}
 
 | Metric | ${isMockData ? 'Sample Persona Data' : 'Verified GitHub Data'} |
 | :--- | :--- |
-| 📦 **Public Repositories** | **${facts.totalPublicRepos}** (${facts.originalReposCount} original creations) |
+| 📦 **Public Repositories** | **${facts.totalPublicRepos}** (${facts.originalReposCount} not forked) |
 | ⭐ **Community Stars** | **${facts.totalStarsEarned}** stars earned across public projects |
 | 🛠️ **Primary Languages** | ${facts.topLanguages.join(', ') || 'None detected'} |
 | 👥 **Followers & Community** | **${facts.followersCount}** followers • **${facts.followingCount}** following |

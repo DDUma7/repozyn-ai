@@ -45,8 +45,10 @@ describe('GitHub Service & Rate Limit Reliability', () => {
       const headers = new Headers();
       const info = parseRateLimitHeaders(headers);
 
-      expect(info.limit).toBe(60);
-      expect(info.remaining).toBe(60);
+      expect(info.limit).toBe(0);
+      expect(info.remaining).toBe(0);
+      expect(info.known).toBe(false);
+      expect(info.source).toBe('unknown');
       expect(info.used).toBe(0);
     });
   });

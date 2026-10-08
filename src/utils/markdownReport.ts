@@ -13,6 +13,10 @@ export function formatReportToMarkdown(report: PortfolioReport): string {
     isMockData
       ? '\n\n> ⚠️ **Demo persona:** this report was generated from synthetic sample data, not a real GitHub profile.'
       : ''
+  }${
+    facts.analyzedReposCount >= 100 && facts.totalPublicRepos > facts.analyzedReposCount
+      ? `\n\n> ℹ️ **Sample:** this audit covers the ${facts.analyzedReposCount} most recently updated of ${facts.totalPublicRepos} public repositories. Scores and findings describe this sample only.`
+      : ''
   }
 
 ---
@@ -31,7 +35,7 @@ export function formatReportToMarkdown(report: PortfolioReport): string {
 
 ---
 
-## 🟣 Recruiter First Impression (Quick Scan)
+## 🟣 Recruiter First Impression (30-Second Scan)
 > "${recruiter.firstImpressionQuote}"
 > — *Engineering Lead / Hiring Manager*
 
@@ -61,7 +65,7 @@ ${roasts
 ${roadmap
   .map(
     (item, idx) => `### ${idx + 1}. ${item.title} (${item.priority.toUpperCase()} • ${item.effort})
-${item.description}
+${item.description}${item.evidence ? `\n- **Evidence:** ${item.evidence}` : ''}
 - **Action Step:** ${item.actionStep}
 `
   )

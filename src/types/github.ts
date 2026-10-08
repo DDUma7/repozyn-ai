@@ -70,6 +70,14 @@ export interface GitHubEvent {
 }
 
 export interface RateLimitInfo {
+  source?: 'github' | 'proxy-request' | 'proxy-ip' | 'proxy-global' | 'proxy-concurrency' | 'unknown';
+  authSource?: 'server' | 'client' | 'anonymous';
+  repositoryAuthSource?: 'server' | 'client' | 'anonymous' | 'unknown';
+  limitKind?: 'primary' | 'secondary' | 'permission';
+  known?: boolean;
+  cached?: boolean;
+  observedAt?: number;
+  retryAt?: number;
   limit: number;
   remaining: number;
   reset: number; // Unix timestamp in seconds
@@ -77,4 +85,3 @@ export interface RateLimitInfo {
   resetMinutes: number;
   resetTimeFormatted?: string;
 }
-

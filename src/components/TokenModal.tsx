@@ -4,6 +4,7 @@ import { X, Key, ShieldCheck, Check, AlertCircle, Trash2, ExternalLink } from 'l
 import { checkRateLimit } from '../services/github';
 import type { RateLimitInfo } from '../types/github';
 import { useDialogAccessibility } from '../hooks/useDialogAccessibility';
+import { quotaMessage } from '../utils/quota';
 
 interface TokenModalProps {
   isOpen: boolean;
@@ -47,7 +48,7 @@ export const TokenModal: React.FC<TokenModalProps> = ({
     setStatusMsg(null);
     try {
       const info = await checkRateLimit(trimmed);
-      if (info.limit > 60) {
+      if (info.known !== false && !info.retryAt && info.limit > 60) {
         onSaveToken(trimmed);
         onRateLimitUpdate(info);
         setStatusMsg({
@@ -57,7 +58,7 @@ export const TokenModal: React.FC<TokenModalProps> = ({
       } else {
         setStatusMsg({
           type: 'error',
-          text: 'Token did not increase rate limit. Ensure it has public repo read access.',
+          text: info.known === false || info.retryAt ? quotaMessage(info) : 'Token did not increase rate limit. Ensure it has public repo read access.',
         });
       }
     } catch (err: any) {
@@ -128,23 +129,27 @@ export const TokenModal: React.FC<TokenModalProps> = ({
           />
         </div>
 
-        {/* Status message */}
-        {statusMsg && (
-          <div
-            className={`p-3 rounded-xl text-xs mb-4 flex items-center gap-2 ${
-              statusMsg.type === 'success'
-                ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-800/50'
-                : 'bg-rose-950/40 text-rose-300 border border-rose-800/50'
-            }`}
-          >
-            {statusMsg.type === 'success' ? (
-              <Check className="w-4 h-4 shrink-0" />
-            ) : (
-              <AlertCircle className="w-4 h-4 shrink-0" />
-            )}
-            <span>{statusMsg.text}</span>
-          </div>
-        )}
+        {/* Status message: always in the page so screen readers announce changes to it */}
+        <div role="status" aria-live="polite" aria-atomic="true" data-testid="token-status">
+          {isVerifying && <p className="sr-only">Verifying token with GitHub…</p>}
+          {statusMsg && !isVerifying && (
+            <div
+              role={statusMsg.type === 'error' ? 'alert' : undefined}
+              className={`p-3 rounded-xl text-xs mb-4 flex items-center gap-2 ${
+                statusMsg.type === 'success'
+                  ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-800/50'
+                  : 'bg-rose-950/40 text-rose-300 border border-rose-800/50'
+              }`}
+            >
+              {statusMsg.type === 'success' ? (
+                <Check className="w-4 h-4 shrink-0" aria-hidden="true" />
+              ) : (
+                <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+              )}
+              <span>{statusMsg.text}</span>
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center justify-between text-xs text-slate-400 mb-6">
           <a
@@ -181,6 +186,7 @@ export const TokenModal: React.FC<TokenModalProps> = ({
           <button
             onClick={handleVerifyAndSave}
             disabled={isVerifying}
+            aria-busy={isVerifying}
             className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition disabled:opacity-50"
           >
             {isVerifying ? 'Verifying...' : 'Save & Verify'}

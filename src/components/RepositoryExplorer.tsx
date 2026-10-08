@@ -10,6 +10,7 @@ import {
   Search,
 } from 'lucide-react';
 import type { GitHubRepo } from '../types/github';
+import { recommendRepository } from '../utils/repozynVerdict';
 
 interface RepositoryExplorerProps {
   repos: GitHubRepo[];
@@ -59,13 +60,14 @@ export const RepositoryExplorer: React.FC<RepositoryExplorerProps> = ({ repos })
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Auditing {repos.length} public repositories. Click any repo to view directly on GitHub.
           </p>
+          <p className="mt-1 text-[11px] text-slate-400">Recommendation labels reflect metadata only; code and links are not verified.</p>
         </div>
 
         {/* Search & Sort Controls */}
         <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
           {/* Quick Search */}
           <div className="relative flex-1 sm:w-56">
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
@@ -94,7 +96,7 @@ export const RepositoryExplorer: React.FC<RepositoryExplorerProps> = ({ repos })
       <div className="flex flex-wrap items-center gap-2 mb-6 text-xs">
         {[
           { id: 'all', label: `All (${repos.length})` },
-          { id: 'original', label: `Original (${repos.filter((r) => !r.fork).length})` },
+          { id: 'original', label: `Not Forks (${repos.filter((r) => !r.fork).length})` },
           { id: 'forks', label: `Forks (${repos.filter((r) => r.fork).length})` },
           {
             id: 'no-desc',
@@ -107,6 +109,8 @@ export const RepositoryExplorer: React.FC<RepositoryExplorerProps> = ({ repos })
         ].map((tab) => (
           <button
             key={tab.id}
+            type="button"
+            aria-pressed={filter === tab.id}
             onClick={() => setFilter(tab.id as any)}
             className={`px-3 py-1.5 rounded-xl transition ${
               filter === tab.id
@@ -127,6 +131,7 @@ export const RepositoryExplorer: React.FC<RepositoryExplorerProps> = ({ repos })
           </div>
         ) : (
           filteredRepos.map((repo) => {
+            const recommendation = recommendRepository(repo);
             const hasDescription = Boolean(repo.description && repo.description.trim().length > 0);
             const hasLicense = Boolean(repo.license);
             const hasDemo = Boolean((repo.homepage && repo.homepage.trim().length > 0) || repo.has_pages);
@@ -144,6 +149,11 @@ export const RepositoryExplorer: React.FC<RepositoryExplorerProps> = ({ repos })
                 className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between group"
               >
                 <div>
+                  {recommendation && (
+                    <span className={`mb-2 inline-block rounded-md border px-2 py-1 text-[11px] font-semibold ${recommendation.label === 'Showcase candidate' ? 'border-emerald-400/25 bg-emerald-500/10 text-emerald-300' : 'border-amber-400/25 bg-amber-500/10 text-amber-300'}`}>
+                      {recommendation.label}<span className="sr-only">: {recommendation.reason}</span>
+                    </span>
+                  )}
                   {/* Repo title + GitHub Link */}
                   <div className="flex items-start justify-between gap-2 mb-1.5">
                     <a
@@ -158,7 +168,7 @@ export const RepositoryExplorer: React.FC<RepositoryExplorerProps> = ({ repos })
 
                     <div className="flex items-center gap-2 shrink-0">
                       {repo.fork && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 font-medium">
+                        <span className="px-1.5 py-0.5 rounded text-[11px] bg-slate-800 text-slate-400 font-medium">
                           Fork
                         </span>
                       )}
@@ -172,7 +182,7 @@ export const RepositoryExplorer: React.FC<RepositoryExplorerProps> = ({ repos })
                   {/* Description */}
                   <p
                     className={`text-xs leading-relaxed line-clamp-2 mb-3 ${
-                      hasDescription ? 'text-slate-300' : 'text-slate-500 italic'
+                      hasDescription ? 'text-slate-300' : 'text-slate-400 italic'
                     }`}
                   >
                     {hasDescription ? (
@@ -198,7 +208,7 @@ export const RepositoryExplorer: React.FC<RepositoryExplorerProps> = ({ repos })
                         {repo.license?.spdx_id || 'Licensed'}
                       </span>
                     ) : (
-                      <span className="text-slate-500">No license</span>
+                      <span className="text-slate-400">No license</span>
                     )}
                   </div>
 
@@ -215,7 +225,7 @@ export const RepositoryExplorer: React.FC<RepositoryExplorerProps> = ({ repos })
                         <span>Demo</span>
                       </a>
                     )}
-                    <span className="text-[10px] text-slate-500">Pushed {pushedDate}</span>
+                    <span className="text-[11px] text-slate-400">Pushed {pushedDate}</span>
                   </div>
                 </div>
               </div>

@@ -105,6 +105,8 @@ export interface RoadmapActionItem {
   impactScore: number; // 1 to 10
   category: 'Quick Fix' | 'Documentation' | 'Credibility' | 'Showcase';
   actionStep: string;
+  /** The observed fact that triggered this action */
+  evidence?: string;
   templateSnippet?: {
     filename: string;
     content: string;

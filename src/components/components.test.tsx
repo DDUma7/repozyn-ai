@@ -51,7 +51,7 @@ describe('UI Components and Dashboard', () => {
 
     expect(screen.getByText(report.recruiter.archetype)).toBeInTheDocument();
     expect(screen.getByText(report.recruiter.hireabilitySignal)).toBeInTheDocument();
-    expect(screen.getByText(/Quick-Scan Verdict/i)).toBeInTheDocument();
+    expect(screen.getByText(/30-Second Verdict/i)).toBeInTheDocument();
   });
 
   it('renders RoastSection and switches tones between mild, medium, and savage', () => {
